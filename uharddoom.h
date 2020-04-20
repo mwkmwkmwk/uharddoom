@@ -12,7 +12,7 @@
 
 /* Enables active units of the device.  TLB and CACHE is passive and doesn't
  * have an enable (disable the client instead).  FIFOs also don't have enables
- * -- disable the source and/or destination unit instead.  */
+ * — disable the source and/or destination unit instead.  */
 #define UHARDDOOM_ENABLE				0x0000
 #define UHARDDOOM_ENABLE_BATCH				0x00000001
 #define UHARDDOOM_ENABLE_JOB				0x00000002
@@ -23,7 +23,7 @@
 #define UHARDDOOM_ENABLE_FX				0x00000040
 #define UHARDDOOM_ENABLE_SWR				0x00000080
 #define UHARDDOOM_ENABLE_ALL				0x000000ff
-/* Status of device units -- 1 means they have work to do.  */
+/* Status of device units — 1 means they have work to do.  */
 #define UHARDDOOM_STATUS				0x0004
 #define UHARDDOOM_STATUS_BATCH				0x00000001
 #define UHARDDOOM_STATUS_JOB				0x00000002
@@ -98,7 +98,7 @@
 /* And enable (same bitfields).  */
 #define UHARDDOOM_INTR_ENABLE				0x000c
 
-/* Section 2.2: BATCH -- batch processor.  Fetches (user pd, cmd ptr,
+/* Section 2.2: BATCH — batch processor.  Fetches (user pd, cmd ptr,
  * cmd size) tuples from kernel pd and pokes JOB.
  *
  * The pseudocode for this unit is:
@@ -134,15 +134,15 @@
 /* The current kernel vaddr that BATCH is reading batches from.  Must be
  * 0x10-byte aligned.  */
 #define UHARDDOOM_BATCH_GET				0x0028
-/* Current end pointer -- when BATCH_GET is equal to BATCH_PUT, BATCH will
+/* Current end pointer — when BATCH_GET is equal to BATCH_PUT, BATCH will
  * halt until more data is available.  */
 #define UHARDDOOM_BATCH_PUT				0x002c
-/* Interrupt pointer -- when BATCH_GET is incremented and reaches this value,
+/* Interrupt pointer — when BATCH_GET is incremented and reaches this value,
  * the BATCH_WAIT interrupt will be triggered.  */
 #define UHARDDOOM_BATCH_WAIT				0x0030
 #define UHARDDOOM_BATCH_PTR_MASK			0xfffffff0
 
-/* Section 2.3: JOB -- the main job controller.  Collects a single job, sends
+/* Section 2.3: JOB — the main job controller.  Collects a single job, sends
  * the PD to TLB, pokes CMD and FE, waits until the whole job is finished,
  * notifies BATCH of completion, raises JOB_DONE interrupt.
  *
@@ -153,7 +153,7 @@
  *    the ACTIVE bit is set in state.
  * 2. When JOB_WAIT is read by FE, the read will block until the ACTIVE bit
  *    is set.
- * 3. When JOB_DONE is written by FE, the job considered to be done -- the
+ * 3. When JOB_DONE is written by FE, the job considered to be done — the
  *    JOB_DONE interrupt is triggered, ACTIVE bit is cleared, and BATCH
  *    is notified of the JOB completion (if FROM_BATCH flag was set).
  */
@@ -178,7 +178,7 @@
 #define UHARDDOOM_JOB_STATE_FROM_BATCH			0x00000002
 #define UHARDDOOM_JOB_STATE_MASK			0x00000003
 
-/* Section 2.4: CMD -- the command fetcher.  Reads a stream of commands from
+/* Section 2.4: CMD — the command fetcher.  Reads a stream of commands from
  * the user PD, buffers them, and delivers them to FE.  Set up by RUN.
  *
  * Functions:
@@ -189,7 +189,7 @@
  *    increments it, decrements CMD_READ_SIZE accordingly, and stores
  *    the commands in the buffer.
  * 3. At any time, FE can read the CMD_END register to know if there are
- *    any commands left in the job -- if CMD_READ_SIZE is zero and the buffer
+ *    any commands left in the job — if CMD_READ_SIZE is zero and the buffer
  *    is empty, CMD will return 1 (otherwise, it will return 0).
  * 4. FE can read the CMD_FETCH register to get the next command from the buffer.
  *    If there is something in the buffer, the command is removed from
@@ -214,20 +214,23 @@
 #define UHARDDOOM_CMD_PTR_MASK				0xfffffffc
 #define UHARDDOOM_CMD_SIZE_MASK				0xfffffffc
 
-/* Section 2.5: FE -- the front end.  Runs firmware that reads the user
+/* Section 2.5: FE — the front end.  Runs firmware that reads the user
  * commands, and converts them to the proper low-level commands understood by
  * COL/SPAN/FX/SWR.  */
 
-/* The FE RAM window.  Reading/writing the WINDOW register reads/writes
- * a word of FE RAM at address ADDR, then auto-increments ADDR by 4.  */
-#define UHARDDOOM_FE_RAM_ADDR				0x0100
-#define UHARDDOOM_FE_RAM_ADDR_MASK			0x0000fffc
-#define UHARDDOOM_FE_RAM_WINDOW				0x0104
+/* The FE RAM windows.  Reading/writing the WINDOW register reads/writes
+ * a word of FE code/data RAM at address ADDR, then auto-increments ADDR by 4.  */
+#define UHARDDOOM_FE_CODE_ADDR				0x0100
+#define UHARDDOOM_FE_CODE_ADDR_MASK			0x0000fffc
+#define UHARDDOOM_FE_CODE_WINDOW			0x0104
+#define UHARDDOOM_FE_DATA_ADDR				0x0108
+#define UHARDDOOM_FE_DATA_ADDR_MASK			0x0000fffc
+#define UHARDDOOM_FE_DATA_WINDOW			0x010c
 /* The current program counter.  */
-#define UHARDDOOM_FE_PC					0x0108
+#define UHARDDOOM_FE_PC					0x0110
 #define UHARDDOOM_FE_PC_MASK				0xfffffffc
 /* The current execution state.  */
-#define UHARDDOOM_FE_STATE				0x010c
+#define UHARDDOOM_FE_STATE				0x0114
 /* The core is actively executing instructions.  */
 #define UHARDDOOM_FE_STATE_STATE_RUNNING		0x00000000
 /* The core is halted due to an error.  */
@@ -250,9 +253,12 @@
 #define UHARDDOOM_FE_STATE_DST_MASK			0x00001f00
 #define UHARDDOOM_FE_STATE_MASK				0x00001fff
 /* The pending write data, when core is blocked on a FIFO write.  */
-#define UHARDDOOM_FE_WRITE_DATA				0x0110
+#define UHARDDOOM_FE_WRITE_DATA				0x0118
+/* The FE error data (set when FE_ERROR interrupt is triggered).  */
+#define UHARDDOOM_FE_ERROR_DATA_A			0x0120
+#define UHARDDOOM_FE_ERROR_DATA_B			0x0124
 /* The FE error code (set when FE_ERROR interrupt is triggered).  */
-#define UHARDDOOM_FE_ERROR_CODE				0x0114
+#define UHARDDOOM_FE_ERROR_CODE				0x0128
 /* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
@@ -267,9 +273,6 @@
  * address, B is the written data.  */
 #define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_WRITE		0x00000083
 #define UHARDDOOM_FE_ERROR_CODE_MASK			0x000000ff
-/* The FE error data (set when FE_ERROR interrupt is triggered).  */
-#define UHARDDOOM_FE_ERROR_DATA_A			0x0118
-#define UHARDDOOM_FE_ERROR_DATA_B			0x011c
 /* The registers.  */
 #define UHARDDOOM_FE_REG(i)				(0x0180 + (i) * 4)
 #define UHARDDOOM_FE_REG_NUM				0x20
@@ -300,9 +303,9 @@
 #define UHARDDOOM_TLB_CLIENT_PTE_TAG(i)			(0x0440 + (i) * 8)
 #define UHARDDOOM_TLB_CLIENT_PTE_VALUE(i)		(0x0444 + (i) * 8)
 /* The PTE cache pool.  */
-#define UHARDDOOM_TLB_POOL_PTE_TAG(i)			(0x0500 + (i) * 8)
-#define UHARDDOOM_TLB_POOL_PTE_VALUE(i)			(0x0504 + (i) * 8)
-#define UHARDDOOM_TLB_POOL_PTE_SIZE			32
+#define UHARDDOOM_TLB_POOL_PTE_TAG(i)			(0x0600 + (i) * 8)
+#define UHARDDOOM_TLB_POOL_PTE_VALUE(i)			(0x0604 + (i) * 8)
+#define UHARDDOOM_TLB_POOL_PTE_SIZE			64
 /* The tag fields.  */
 #define UHARDDOOM_TLB_TAG_VALID				0x00000001
 /* Set if the TLB entry relates to kernel PD.  */
@@ -314,9 +317,46 @@
 
 /* XXX */
 
-/* Section 2.9: SPAN.  */
+/* Section 2.9: SPAN -- the span reader.  Used to read texture data for
+ * the DRAW_SPAN function, and to read source data for the BLIT function.  Sends the texels to the FX unit.
+ *
+ * The pseudocode for the main function (DRAW) is as follows:
+ *
+ * for _ in range(DRAW.LENGTH):
+ *     u = (USTART >> 16) & ((1 << UVMASK.ULOG) - 1)
+ *     v = (VSTART >> 16) & ((1 << UVMASK.VLOG) - 1)
+ *     texel_ptr = src_ptr + v * src_pitch + u
+ *     block[DRAW.XOFF] = cached_mem_read(USER_PD, texel_ptr)
+ *     USTART += USTEP
+ *     VSTART += VSTEP
+ *     if DRAW.XOFF == 63:
+ *         DRAW.XOFF = 0
+ *         SPANOUT.send(block)
+ *     else:
+ *         DRAW.XOFF += 1
+ * if DRAW.XOFF != 0:
+ *     SPANOUT.send(block)
+ */
 
-/* XXX */
+#define HARDDOOM2_SPAN_STATE				0x0a00
+#define HARDDOOM2_SPAN_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define HARDDOOM2_SPAN_STATE_DRAW_XOFF_MASK		0x003f0000
+/* The command currently being processed.  */
+#define HARDDOOM2_SPAN_STATE_CMD_TYPE_MASK		0xf0000000
+#define HARDDOOM2_SPAN_STATE_CMD_TYPE_SHIFT		28
+#define HARDDOOM2_SPAN_STATE_MASK			0xf03fffff
+/* The virtual base address of the source.  */
+#define HARDDOOM2_SPAN_SRC_PTR				0x0a04
+/* The pitch of the source.  */
+#define HARDDOOM2_SPAN_SRC_PITCH			0x0a08
+/* The mask of the source uv coords.  */
+#define HARDDOOM2_SPAN_UVMASK				0x0a0c
+#define HARDDOOM2_SPAN_UVMASK_MASK			0x00001f1f
+#define HARDDOOM2_SPAN_USTART				0x0a10
+#define HARDDOOM2_SPAN_VSTART				0x0a14
+#define HARDDOOM2_SPAN_USTEP				0x0a18
+#define HARDDOOM2_SPAN_VSTEP				0x0a1c
+
 
 /* Section 2.10: FX.  */
 
@@ -394,28 +434,57 @@
 #define UHARDDOOM_FEMEM_SPANCMD(t)			(0x00000500 + (t) * 4)
 #define UHARDDOOM_FEMEM_FXCMD(t)			(0x00000600 + (t) * 4)
 #define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000700 + (t) * 4)
+/* Read to wait for a signal from SWR on the FELOCK interface.  */
+#define UHARDDOOM_FEMEM_FELOCK				0x00000800
 /* Write to bump a STATS counter.  */
-#define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000800 + (t) * 4)
-/* The code/data RAM.  */
-#define UHARDDOOM_FEMEM_RAM_BASE			0x80000000
-#define UHARDDOOM_FEMEM_RAM_SIZE			0x10000
+#define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000c00 + (t) * 4)
+/* The code RAM — read only from the core.  */
+#define UHARDDOOM_FEMEM_CODE_BASE			0x80000000
+#define UHARDDOOM_FEMEM_CODE_SIZE			0x10000
+/* The data RAM.  */
+#define UHARDDOOM_FEMEM_DATA_BASE			0xc0000000
+#define UHARDDOOM_FEMEM_DATA_SIZE			0x10000
 
 
 /* Section 7: Internal commands.  */
 
-/* Section 7.1: COLCMD -- COL unit internal commands.  */
+/* Section 7.1: COLCMD — COL unit internal commands.  */
 
 /* XXX */
 
-/* Section 7.2: SPANCMD -- SPAN unit internal commands.  */
+/* Section 7.2: SPANCMD — SPAN unit internal commands.  */
+
+#define HARDDOOM2_SPANCMD_TYPE_NOP			0x0
+/* The virtual base address of the source.  */
+#define HARDDOOM2_SPANCMD_TYPE_SRC_PTR			0x1
+/* The pitch of the source.  */
+#define HARDDOOM2_SPANCMD_TYPE_SRC_PITCH		0x2
+/* The mask of the source uv coords.  */
+#define HARDDOOM2_SPANCMD_TYPE_UVMASK			0x3
+/* Straight from the command words.  */
+#define HARDDOOM2_SPANCMD_TYPE_USTART			0x4
+#define HARDDOOM2_SPANCMD_TYPE_VSTART			0x5
+#define HARDDOOM2_SPANCMD_TYPE_USTEP			0x6
+#define HARDDOOM2_SPANCMD_TYPE_VSTEP			0x7
+/* Emits a given number of texels to the FX.  */
+#define HARDDOOM2_SPANCMD_TYPE_DRAW			0x8
+/* Waits for a signal from SWR on the SPANLOCK interface, then flushes cache.  */
+#define HARDDOOM2_SPANCMD_TYPE_SPANLOCK			0x9
+
+#define HARDDOOM2_SPANCMD_DATA_UVMASK(ulog, vlog)	((ulog) | (vlog) << 8)
+#define HARDDOOM2_SPANCMD_DATA_EXTR_UVMASK_ULOG(cmd)	((cmd) & 0x3f)
+#define HARDDOOM2_SPANCMD_DATA_EXTR_UVMASK_VLOG(cmd)	((cmd) >> 8 & 0x3f)
+#define HARDDOOM2_SPANCMD_DATA_DRAW(len, xoff)		((len) | (xoff) << 16)
+/* Number of actual pixels to be drawn.  */
+#define HARDDOOM2_SPANCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+/* Number of dummy pixels to be sent at the beginning of the first block.  */
+#define HARDDOOM2_SPANCMD_DATA_EXTR_DRAW_XOFF(cmd)	((cmd) >> 16 & 0x3f)
+
+/* Section 7.3: FXCMD — FX unit internal commands.  */
 
 /* XXX */
 
-/* Section 7.3: FXCMD -- FX unit internal commands.  */
-
-/* XXX */
-
-/* Section 7.4: SWRCMD -- SWR unit internal commands.  */
+/* Section 7.4: SWRCMD — SWR unit internal commands.  */
 
 /* XXX */
 

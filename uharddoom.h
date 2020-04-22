@@ -317,7 +317,7 @@
 
 /* XXX */
 
-/* Section 2.9: SPAN -- the span reader.  Used to read texture data for
+/* Section 2.9: SPAN — the span reader.  Used to read texture data for
  * the DRAW_SPAN function, and to read source data for the BLIT function.  Sends the texels to the FX unit.
  *
  * The pseudocode for the main function (DRAW) is as follows:
@@ -338,37 +338,96 @@
  *     SPANOUT.send(block)
  */
 
-#define HARDDOOM2_SPAN_STATE				0x0a00
-#define HARDDOOM2_SPAN_STATE_DRAW_LENGTH_MASK		0x0000ffff
-#define HARDDOOM2_SPAN_STATE_DRAW_XOFF_MASK		0x003f0000
-/* The command currently being processed.  */
-#define HARDDOOM2_SPAN_STATE_CMD_TYPE_MASK		0xf0000000
-#define HARDDOOM2_SPAN_STATE_CMD_TYPE_SHIFT		28
-#define HARDDOOM2_SPAN_STATE_MASK			0xf03fffff
+#define UHARDDOOM_SPAN_STATE				0x0a00
+#define UHARDDOOM_SPAN_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_SPAN_STATE_DRAW_XOFF_MASK		0x003f0000
+#define UHARDDOOM_SPAN_STATE_DRAW_XOFF_SHIFT		16
+/* If 1, waiting on SPANLOCK.  */
+#define UHARDDOOM_SPAN_STATE_SPANLOCK			0x10000000
+#define UHARDDOOM_SPAN_STATE_MASK			0x103fffff
 /* The virtual base address of the source.  */
-#define HARDDOOM2_SPAN_SRC_PTR				0x0a04
+#define UHARDDOOM_SPAN_SRC_PTR				0x0a04
 /* The pitch of the source.  */
-#define HARDDOOM2_SPAN_SRC_PITCH			0x0a08
+#define UHARDDOOM_SPAN_SRC_PITCH			0x0a08
 /* The mask of the source uv coords.  */
-#define HARDDOOM2_SPAN_UVMASK				0x0a0c
-#define HARDDOOM2_SPAN_UVMASK_MASK			0x00001f1f
-#define HARDDOOM2_SPAN_USTART				0x0a10
-#define HARDDOOM2_SPAN_VSTART				0x0a14
-#define HARDDOOM2_SPAN_USTEP				0x0a18
-#define HARDDOOM2_SPAN_VSTEP				0x0a1c
+#define UHARDDOOM_SPAN_UVMASK				0x0a0c
+#define UHARDDOOM_SPAN_UVMASK_MASK			0x00001f1f
+#define UHARDDOOM_SPAN_USTART				0x0a10
+#define UHARDDOOM_SPAN_VSTART				0x0a14
+#define UHARDDOOM_SPAN_USTEP				0x0a18
+#define UHARDDOOM_SPAN_VSTEP				0x0a1c
 
+/* Section 2.10: SWR — surface write unit.  Gathers blocks from COL or FX,
+ * possibly runs them through the TRANSMAP, writes them to memory.  */
 
-/* Section 2.10: FX.  */
+#define UHARDDOOM_SWR_STATE				0x0b00
+#define UHARDDOOM_SWR_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_SWR_STATE_VERT_EN			0x00010000
+#define UHARDDOOM_SWR_STATE_COL_EN			0x00020000
+#define UHARDDOOM_SWR_STATE_TRANS_EN			0x00040000
+#define UHARDDOOM_SWR_STATE_BUF_FULL			0x00080000
+#define UHARDDOOM_SWR_STATE_BUF_POS_MASK		0x07f00000
+#define UHARDDOOM_SWR_STATE_BUF_POS_SHIFT		20
+/* If 1, pending FELOCK, COLLOCK, SPANLOCK.  */
+#define UHARDDOOM_SWR_STATE_FELOCK			0x10000000
+#define UHARDDOOM_SWR_STATE_COLLOCK			0x20000000
+#define UHARDDOOM_SWR_STATE_SPANLOCK			0x40000000
+#define UHARDDOOM_SWR_STATE_MASK			0x77ffffff
+#define UHARDDOOM_SWR_TRANSMAP_PTR			0x0b04
+#define UHARDDOOM_SWR_DST_PTR				0x0b08
+#define UHARDDOOM_SWR_DST_PITCH				0x0b0c
+/* 64-bit */
+#define UHARDDOOM_SWR_MASK				0x0b10
+#define UHARDDOOM_SWR_DATA(i)				(0x0b40 + (i))
+
+/* Section 2.11: FX — the effects unit.  Gets raw texture data from the SPAN
+ * unit, or draws with a constant color.  Applies colormap for spans, handles
+ * solid drawing, does the fuzz effect.  */
 
 /* XXX */
 
-/* Section 2.11: SWR.  */
+/* Section 2.12: COL — the column reader.  Used to read texture data for
+ * the DRAW_COLUMN function, and to read source data for the WIPE function.
+ * Capable of handling 64 columns at once.  Can apply up to two colormaps:
+ * colormap A applies to all columns, while colormap B is per-column.
+ * The textured and colormapped pixels are sent to SWR, along with the valid
+ * pixel mask.  */
 
-/* XXX */
+#define UHARDDOOM_COL_STATE				0x2000
+#define UHARDDOOM_COL_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_COL_STATE_CMAP_A_EN			0x00010000
+/* The next column to be textured.  */
+#define UHARDDOOM_COL_STATE_XOFF_MASK			0x03f00000
+#define UHARDDOOM_COL_STATE_XOFF_SHIFT			20
+/* If 1, waiting on COLLOCK.  */
+#define UHARDDOOM_COL_STATE_COLLOCK			0x10000000
+#define UHARDDOOM_COL_STATE_MASK			0x13f1ffff
+/* Per-column command state, to be moved to proper column RAM by COL_SETUP.  */
+#define UHARDDOOM_COL_STAGE_CMAP_B_PTR			0x2004
+#define UHARDDOOM_COL_STAGE_SRC_PTR			0x2008
+#define UHARDDOOM_COL_STAGE_SRC_PITCH			0x200c
+#define UHARDDOOM_COL_STAGE_USTART			0x2010
+#define UHARDDOOM_COL_STAGE_USTEP			0x2014
+/* Actual per-column state.  */
+#define UHARDDOOM_COL_COLS_CMAP_B_PTR(i)		(0x2100 + (i) * 4)
+#define UHARDDOOM_COL_COLS_SRC_PTR(i)			(0x2200 + (i) * 4)
+#define UHARDDOOM_COL_COLS_SRC_PITCH(i)			(0x2300 + (i) * 4)
+#define UHARDDOOM_COL_COLS_USTART(i)			(0x2400 + (i) * 4)
+#define UHARDDOOM_COL_COLS_USTEP(i)			(0x2500 + (i) * 4)
+#define UHARDDOOM_COL_COLS_STATE(i)			(0x2600 + (i) * 4)
+#define UHARDDOOM_COL_COLS_STATE_DATA_CMAP_MASK		0x0000007f
+#define UHARDDOOM_COL_COLS_STATE_ULOG_MASK		0x00001f00
+#define UHARDDOOM_COL_COLS_STATE_COL_EN			0x00002000
+#define UHARDDOOM_COL_COLS_STATE_CMAP_B_EN		0x00004000
+#define UHARDDOOM_COL_COLS_STATE_UY_EN			0x00008000
+#define UHARDDOOM_COL_COLS_STATE_DATA_GET_MASK		0x007f0000
+#define UHARDDOOM_COL_COLS_STATE_DATA_PUT_MASK		0x7f000000
 
-/* Section 2.12: COL.  */
-
-/* XXX */
+#define UHARDDOOM_COL_COLS_STATE_MASK			0x7f7fff7f
+/* The CMAP_A data (256 bytes).  */
+#define UHARDDOOM_COL_CMAP_A_DATA(i)			(0x2700 + (i))
+/* The pre-textured data.  */
+#define UHARDDOOM_COL_DATA(i, j)			(0x3000 + (i) * 64 + (j))
 
 /* Section 2.13: CACHEs.  */
 
@@ -409,7 +468,7 @@
 
 /* The block size used for drawing etc (64 pixels).  */
 #define UHARDDOOM_BLOCK_SIZE				0x40
-/* XXX */
+#define UHARDDOOM_COLORMAP_SIZE				0x100
 
 
 /* Section 6: FE core internal memory map.  */
@@ -450,35 +509,70 @@
 
 /* Section 7.1: COLCMD — COL unit internal commands.  */
 
-/* XXX */
+#define UHARDDOOM_COLCMD_TYPE_NOP			0x0
+/* Per-column colormap B virtual address.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_CMAP_B_PTR		0x1
+/* Per-column source virtual address.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PTR		0x2
+/* Per-column source pitch.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PITCH		0x3
+/* Per-column U coord.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_USTART		0x4
+#define UHARDDOOM_COLCMD_TYPE_COL_USTEP			0x5
+/* Sets up a column (use after the above per-column commands).  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SETUP			0x6
+/* Colormap A virtual address.  */
+#define UHARDDOOM_COLCMD_TYPE_CMAP_A_PTR		0x7
+/* Emits a given number of blocks to the SWR.  */
+#define UHARDDOOM_COLCMD_TYPE_DRAW			0x8
+/* Waits for a signal from SWR on the COLLOCK interface, then flushes cache.  */
+#define UHARDDOOM_COLCMD_TYPE_COLLOCK			0x9
+#define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en, uy_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14 | (uy_en) << 15)
+/* The column X coord in the block.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
+/* U coord mask.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_ULOG(cmd)	((cmd) >> 8 & 0x1f)
+/* Column enable — if unset, this column will be disabled and skipped in
+ * blocks sent to SWR.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_COL_EN(cmd)	((cmd) >> 13 & 1)
+/* Colormap B enable.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_CMAP_B_EN(cmd)	((cmd) >> 14 & 1)
+/* If enabled, U is mapped to y coord within the source (ie. multiplied by
+ * source pitch), otherwise x.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_UY_EN(cmd)	((cmd) >> 15 & 1)
+#define UHARDDOOM_COLCMD_DATA_DRAW(len, cmap_a_en)	((len) | (cmap_a_en) << 16)
+/* Number of blocks to be drawn.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+/* Colormap A enable.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_CMAP_A_EN(cmd)	((cmd) >> 16 & 1)
 
 /* Section 7.2: SPANCMD — SPAN unit internal commands.  */
 
-#define HARDDOOM2_SPANCMD_TYPE_NOP			0x0
+#define UHARDDOOM_SPANCMD_TYPE_NOP			0x0
 /* The virtual base address of the source.  */
-#define HARDDOOM2_SPANCMD_TYPE_SRC_PTR			0x1
+#define UHARDDOOM_SPANCMD_TYPE_SRC_PTR			0x1
 /* The pitch of the source.  */
-#define HARDDOOM2_SPANCMD_TYPE_SRC_PITCH		0x2
+#define UHARDDOOM_SPANCMD_TYPE_SRC_PITCH		0x2
 /* The mask of the source uv coords.  */
-#define HARDDOOM2_SPANCMD_TYPE_UVMASK			0x3
+#define UHARDDOOM_SPANCMD_TYPE_UVMASK			0x3
 /* Straight from the command words.  */
-#define HARDDOOM2_SPANCMD_TYPE_USTART			0x4
-#define HARDDOOM2_SPANCMD_TYPE_VSTART			0x5
-#define HARDDOOM2_SPANCMD_TYPE_USTEP			0x6
-#define HARDDOOM2_SPANCMD_TYPE_VSTEP			0x7
+#define UHARDDOOM_SPANCMD_TYPE_USTART			0x4
+#define UHARDDOOM_SPANCMD_TYPE_VSTART			0x5
+#define UHARDDOOM_SPANCMD_TYPE_USTEP			0x6
+#define UHARDDOOM_SPANCMD_TYPE_VSTEP			0x7
 /* Emits a given number of texels to the FX.  */
-#define HARDDOOM2_SPANCMD_TYPE_DRAW			0x8
+#define UHARDDOOM_SPANCMD_TYPE_DRAW			0x8
 /* Waits for a signal from SWR on the SPANLOCK interface, then flushes cache.  */
-#define HARDDOOM2_SPANCMD_TYPE_SPANLOCK			0x9
+#define UHARDDOOM_SPANCMD_TYPE_SPANLOCK			0x9
 
-#define HARDDOOM2_SPANCMD_DATA_UVMASK(ulog, vlog)	((ulog) | (vlog) << 8)
-#define HARDDOOM2_SPANCMD_DATA_EXTR_UVMASK_ULOG(cmd)	((cmd) & 0x3f)
-#define HARDDOOM2_SPANCMD_DATA_EXTR_UVMASK_VLOG(cmd)	((cmd) >> 8 & 0x3f)
-#define HARDDOOM2_SPANCMD_DATA_DRAW(len, xoff)		((len) | (xoff) << 16)
+#define UHARDDOOM_SPANCMD_DATA_UVMASK(ulog, vlog)	((ulog) | (vlog) << 8)
+#define UHARDDOOM_SPANCMD_DATA_EXTR_UVMASK_ULOG(cmd)	((cmd) & 0x3f)
+#define UHARDDOOM_SPANCMD_DATA_EXTR_UVMASK_VLOG(cmd)	((cmd) >> 8 & 0x3f)
+#define UHARDDOOM_SPANCMD_DATA_DRAW(len, xoff)		((len) | (xoff) << 16)
 /* Number of actual pixels to be drawn.  */
-#define HARDDOOM2_SPANCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+#define UHARDDOOM_SPANCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
 /* Number of dummy pixels to be sent at the beginning of the first block.  */
-#define HARDDOOM2_SPANCMD_DATA_EXTR_DRAW_XOFF(cmd)	((cmd) >> 16 & 0x3f)
+#define UHARDDOOM_SPANCMD_DATA_EXTR_DRAW_XOFF(cmd)	((cmd) >> 16 & 0x3f)
 
 /* Section 7.3: FXCMD — FX unit internal commands.  */
 
@@ -486,7 +580,28 @@
 
 /* Section 7.4: SWRCMD — SWR unit internal commands.  */
 
-/* XXX */
-
+#define UHARDDOOM_SWRCMD_TYPE_NOP			0x0
+/* The virtual base address of the TRANSMAP.  */
+#define UHARDDOOM_SWRCMD_TYPE_TRANSMAP_PTR		0x1
+/* The virtual base address of the destination.  */
+#define UHARDDOOM_SWRCMD_TYPE_DST_PTR			0x2
+/* The pitch of the destination.  */
+#define UHARDDOOM_SWRCMD_TYPE_DST_PITCH			0x3
+/* Draw blocks from COL or FX.  */
+#define UHARDDOOM_SWRCMD_TYPE_DRAW			0x4
+/* Send a signal on FELOCK.  */
+#define UHARDDOOM_SWRCMD_TYPE_FELOCK			0x5
+/* Send a signal on COLLOCK.  */
+#define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x6
+/* Send a signal on SPANLOCK.  */
+#define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x7
+#define UHARDDOOM_SWRCMD_DATA_DRAW(len, v_en, c_en, t_en)	((len) | (v_en) << 16 | (c_en) << 17 | (t_en) << 18)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+/* If set, draw vertically.  */
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_VERT_EN(cmd)	((cmd) >> 16 & 1)
+/* If set, draw from COL, otherwise from FX.  */
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 17 & 1)
+/* If set, enable the TRANSMAP.  */
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_TRANS_EN(cmd)	((cmd) >> 18 & 1)
 
 #endif

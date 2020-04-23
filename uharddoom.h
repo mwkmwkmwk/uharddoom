@@ -18,67 +18,81 @@
 #define UHARDDOOM_ENABLE_JOB				0x00000002
 #define UHARDDOOM_ENABLE_CMD				0x00000004
 #define UHARDDOOM_ENABLE_FE				0x00000008
-#define UHARDDOOM_ENABLE_COL				0x00000010
+#define UHARDDOOM_ENABLE_SRD				0x00000010
 #define UHARDDOOM_ENABLE_SPAN				0x00000020
-#define UHARDDOOM_ENABLE_FX				0x00000040
-#define UHARDDOOM_ENABLE_SWR				0x00000080
-#define UHARDDOOM_ENABLE_ALL				0x000000ff
+#define UHARDDOOM_ENABLE_COL				0x00000040
+#define UHARDDOOM_ENABLE_FX				0x00000080
+#define UHARDDOOM_ENABLE_SWR				0x00000100
+#define UHARDDOOM_ENABLE_ALL				0x000001ff
 /* Status of device units — 1 means they have work to do.  */
 #define UHARDDOOM_STATUS				0x0004
 #define UHARDDOOM_STATUS_BATCH				0x00000001
 #define UHARDDOOM_STATUS_JOB				0x00000002
 #define UHARDDOOM_STATUS_CMD				0x00000004
 #define UHARDDOOM_STATUS_FE				0x00000008
-#define UHARDDOOM_STATUS_COL				0x00000010
+#define UHARDDOOM_STATUS_SRD				0x00000010
 #define UHARDDOOM_STATUS_SPAN				0x00000020
-#define UHARDDOOM_STATUS_FX				0x00000040
-#define UHARDDOOM_STATUS_SWR				0x00000080
-#define UHARDDOOM_STATUS_FIFO_COLCMD			0x00100000
-#define UHARDDOOM_STATUS_FIFO_SPANCMD			0x00200000
-#define UHARDDOOM_STATUS_FIFO_FXCMD			0x00400000
-#define UHARDDOOM_STATUS_FIFO_SWRCMD			0x00800000
+#define UHARDDOOM_STATUS_COL				0x00000040
+#define UHARDDOOM_STATUS_FX				0x00000080
+#define UHARDDOOM_STATUS_SWR				0x00000100
+#define UHARDDOOM_STATUS_FIFO_SRDCMD			0x00010000
+#define UHARDDOOM_STATUS_FIFO_SPANCMD			0x00020000
+#define UHARDDOOM_STATUS_FIFO_COLCMD			0x00040000
+#define UHARDDOOM_STATUS_FIFO_FXCMD			0x00080000
+#define UHARDDOOM_STATUS_FIFO_SWRCMD			0x00100000
+#define UHARDDOOM_STATUS_FIFO_COLIN			0x00200000
+#define UHARDDOOM_STATUS_FIFO_FXIN			0x00400000
 #define UHARDDOOM_STATUS_FIFO_FELOCK			0x01000000
-#define UHARDDOOM_STATUS_FIFO_COLLOCK			0x02000000
-#define UHARDDOOM_STATUS_FIFO_SPANLOCK			0x04000000
-#define UHARDDOOM_STATUS_FIFO_SPANOUT			0x08000000
-#define UHARDDOOM_STATUS_FIFO_COLOUT			0x10000000
-#define UHARDDOOM_STATUS_FIFO_FXOUT			0x20000000
+#define UHARDDOOM_STATUS_FIFO_SRDLOCK			0x02000000
+#define UHARDDOOM_STATUS_FIFO_COLLOCK			0x04000000
+#define UHARDDOOM_STATUS_FIFO_SPANLOCK			0x08000000
+#define UHARDDOOM_STATUS_FIFO_SPANOUT			0x10000000
+#define UHARDDOOM_STATUS_FIFO_COLOUT			0x20000000
+#define UHARDDOOM_STATUS_FIFO_FXOUT			0x40000000
 /* The reset register.  Punching 1 will clear all pending work and/or
  * cached data.  */
 #define UHARDDOOM_RESET					0x0004
+#define UHARDDOOM_RESET_FIFO_COLCMD			0x00010000
+#define UHARDDOOM_RESET_FIFO_SPANCMD			0x00020000
+#define UHARDDOOM_RESET_FIFO_FXCMD			0x00040000
+#define UHARDDOOM_RESET_FIFO_SWRCMD			0x00080000
+#define UHARDDOOM_RESET_FIFO_FELOCK			0x00100000
+#define UHARDDOOM_RESET_FIFO_COLLOCK			0x00200000
+#define UHARDDOOM_RESET_FIFO_SPANLOCK			0x00400000
+#define UHARDDOOM_RESET_FIFO_SPANOUT			0x01000000
+#define UHARDDOOM_RESET_FIFO_COLOUT			0x02000000
+#define UHARDDOOM_RESET_FIFO_FXOUT			0x04000000
 #define UHARDDOOM_RESET_BATCH				0x00000001
 #define UHARDDOOM_RESET_JOB				0x00000002
 #define UHARDDOOM_RESET_CMD				0x00000004
 #define UHARDDOOM_RESET_FE				0x00000008
-#define UHARDDOOM_RESET_COL				0x00000010
+#define UHARDDOOM_RESET_SRD				0x00000010
 #define UHARDDOOM_RESET_SPAN				0x00000020
-#define UHARDDOOM_RESET_FX				0x00000040
-#define UHARDDOOM_RESET_SWR				0x00000080
-#define UHARDDOOM_RESET_TLB_BATCH			0x00000100
-#define UHARDDOOM_RESET_TLB_CMD				0x00000200
-#define UHARDDOOM_RESET_TLB_SWR_DST			0x00000400
-#define UHARDDOOM_RESET_TLB_COL_CMAP_A			0x00000800
-#define UHARDDOOM_RESET_TLB_COL_CMAP_B			0x00001000
-#define UHARDDOOM_RESET_TLB_COL_SRC			0x00002000
-#define UHARDDOOM_RESET_TLB_SPAN_SRC			0x00004000
-#define UHARDDOOM_RESET_TLB_SWR_TRANSMAP		0x00008000
-#define UHARDDOOM_RESET_TLB_USER_ALL			0x0000fe00
-#define UHARDDOOM_RESET_CACHE_COL_CMAP_B		0x00010000
-#define UHARDDOOM_RESET_CACHE_COL_SRC			0x00020000
-#define UHARDDOOM_RESET_CACHE_SPAN_SRC			0x00040000
-#define UHARDDOOM_RESET_CACHE_SWR_TRANSMAP		0x00080000
-#define UHARDDOOM_RESET_FIFO_COLCMD			0x00100000
-#define UHARDDOOM_RESET_FIFO_SPANCMD			0x00200000
-#define UHARDDOOM_RESET_FIFO_FXCMD			0x00400000
-#define UHARDDOOM_RESET_FIFO_SWRCMD			0x00800000
+#define UHARDDOOM_RESET_COL				0x00000040
+#define UHARDDOOM_RESET_FX				0x00000080
+#define UHARDDOOM_RESET_SWR				0x00000100
+#define UHARDDOOM_RESET_STATS				0x00000200
+#define UHARDDOOM_RESET_TLB_KERNEL			0x00000400
+#define UHARDDOOM_RESET_TLB_USER			0x00000800
+#define UHARDDOOM_RESET_CACHE_COL_CMAP_B		0x00001000
+#define UHARDDOOM_RESET_CACHE_COL_SRC			0x00002000
+#define UHARDDOOM_RESET_CACHE_SPAN_SRC			0x00004000
+#define UHARDDOOM_RESET_CACHE_SWR_TRANSMAP		0x00008000
+#define UHARDDOOM_RESET_FIFO_SRDCMD			0x00010000
+#define UHARDDOOM_RESET_FIFO_SPANCMD			0x00020000
+#define UHARDDOOM_RESET_FIFO_COLCMD			0x00040000
+#define UHARDDOOM_RESET_FIFO_FXCMD			0x00080000
+#define UHARDDOOM_RESET_FIFO_SWRCMD			0x00100000
+#define UHARDDOOM_RESET_FIFO_COLIN			0x00200000
+#define UHARDDOOM_RESET_FIFO_FXIN			0x00400000
 #define UHARDDOOM_RESET_FIFO_FELOCK			0x01000000
-#define UHARDDOOM_RESET_FIFO_COLLOCK			0x02000000
-#define UHARDDOOM_RESET_FIFO_SPANLOCK			0x04000000
-#define UHARDDOOM_RESET_FIFO_SPANOUT			0x08000000
-#define UHARDDOOM_RESET_FIFO_COLOUT			0x10000000
-#define UHARDDOOM_RESET_FIFO_FXOUT			0x20000000
-#define UHARDDOOM_RESET_STATS				0x80000000
-#define UHARDDOOM_RESET_ALL				0xbfffffff
+#define UHARDDOOM_RESET_FIFO_SRDLOCK			0x02000000
+#define UHARDDOOM_RESET_FIFO_COLLOCK			0x04000000
+#define UHARDDOOM_RESET_FIFO_SPANLOCK			0x08000000
+#define UHARDDOOM_RESET_FIFO_SPANOUT			0x10000000
+#define UHARDDOOM_RESET_FIFO_COLOUT			0x20000000
+#define UHARDDOOM_RESET_FIFO_FXOUT			0x40000000
+#define UHARDDOOM_RESET_ALL				0x7fffffff
 /* Interrupt status.  */
 #define UHARDDOOM_INTR					0x0008
 #define UHARDDOOM_INTR_BATCH_WAIT			0x00000001
@@ -88,8 +102,8 @@
 #define UHARDDOOM_INTR_PAGE_FAULT(i)			(0x00000100 << (i))
 #define UHARDDOOM_INTR_PAGE_FAULT_BATCH			0x00000100
 #define UHARDDOOM_INTR_PAGE_FAULT_CMD			0x00000200
-#define UHARDDOOM_INTR_PAGE_FAULT_SWR_DST		0x00000400
-#define UHARDDOOM_INTR_PAGE_FAULT_COL_CMAP_A		0x00000800
+#define UHARDDOOM_INTR_PAGE_FAULT_SRD			0x00000400
+#define UHARDDOOM_INTR_PAGE_FAULT_SWR_DST		0x00000800
 #define UHARDDOOM_INTR_PAGE_FAULT_COL_CMAP_B		0x00001000
 #define UHARDDOOM_INTR_PAGE_FAULT_COL_SRC		0x00002000
 #define UHARDDOOM_INTR_PAGE_FAULT_SPAN_SRC		0x00004000
@@ -235,17 +249,18 @@
 #define UHARDDOOM_FE_STATE_STATE_RUNNING		0x00000000
 /* The core is halted due to an error.  */
 #define UHARDDOOM_FE_STATE_STATE_ERROR			0x00000001
-/* The core is blocked on RUN_WAIT read.  */
-#define UHARDDOOM_FE_STATE_STATE_RUN_WAIT		0x00000002
+/* The core is blocked on JOB_WAIT read.  */
+#define UHARDDOOM_FE_STATE_STATE_JOB_WAIT		0x00000002
 /* The core is blocked on CMD_FETCH read.  */
 #define UHARDDOOM_FE_STATE_STATE_CMD_FETCH		0x00000003
 /* The core is blocked on a FIFO write.  */
-#define UHARDDOOM_FE_STATE_STATE_COLCMD			0x00000004
+#define UHARDDOOM_FE_STATE_STATE_SRDCMD			0x00000004
 #define UHARDDOOM_FE_STATE_STATE_SPANCMD		0x00000005
-#define UHARDDOOM_FE_STATE_STATE_FXCMD			0x00000006
-#define UHARDDOOM_FE_STATE_STATE_SWRCMD			0x00000007
+#define UHARDDOOM_FE_STATE_STATE_COLCMD			0x00000006
+#define UHARDDOOM_FE_STATE_STATE_FXCMD			0x00000007
+#define UHARDDOOM_FE_STATE_STATE_SWRCMD			0x00000008
 /* The core is blocked on FELOCK read.  */
-#define UHARDDOOM_FE_STATE_STATE_FELOCK			0x00000008
+#define UHARDDOOM_FE_STATE_STATE_FELOCK			0x00000009
 #define UHARDDOOM_FE_STATE_STATE_MASK			0x0000000f
 /* The pending command code, when core is blocked on a FIFO write.  */
 #define UHARDDOOM_FE_STATE_CMD_MASK			0x000000f0
@@ -279,15 +294,15 @@
 
 /* Section 2.6: FIFOs.  */
 
-/* XXX */
+/* XXX: destined for 0x200:0x400 */
 
 /* Section 2.7: TLB.  */
 
 /* The TLB client indices.  */
 #define UHARDDOOM_TLB_CLIENT_BATCH			0
 #define UHARDDOOM_TLB_CLIENT_CMD			1
-#define UHARDDOOM_TLB_CLIENT_SWR_DST			2
-#define UHARDDOOM_TLB_CLIENT_COL_CMAP_A			3
+#define UHARDDOOM_TLB_CLIENT_SRD			2
+#define UHARDDOOM_TLB_CLIENT_SWR_DST			3
 #define UHARDDOOM_TLB_CLIENT_COL_CMAP_B			4
 #define UHARDDOOM_TLB_CLIENT_COL_SRC			5
 #define UHARDDOOM_TLB_CLIENT_SPAN_SRC			6
@@ -315,9 +330,24 @@
 
 /* Section 2.8: STATS.  */
 
-/* XXX */
+/* XXX: destined for 0x800:0xa00 */
 
-/* Section 2.9: SPAN — the span reader.  Used to read texture data for
+/* Section 2.9: SRD — surface read unit.  Reads raw surface or colorbuf
+ * blocks, sends them to COL or FX.  */
+
+#define UHARDDOOM_SRD_STATE				0x0a00
+#define UHARDDOOM_SRD_STATE_FETCH_LENGTH_MASK		0x0000ffff
+/* If 1, reads to COL, otherwise reads to FX.  */
+#define UHARDDOOM_SRD_STATE_COL				0x00010000
+/* If 1, waiting on SRDLOCK.  */
+#define UHARDDOOM_SRD_STATE_SRDLOCK			0x10000000
+#define UHARDDOOM_SRD_STATE_MASK			0x1001ffff
+/* The virtual base address of the source.  */
+#define UHARDDOOM_SRD_SRC_PTR				0x0a04
+/* The pitch of the source.  */
+#define UHARDDOOM_SRD_SRC_PITCH				0x0a08
+
+/* Section 2.10: SPAN — the span reader.  Used to read texture data for
  * the DRAW_SPAN function, and to read source data for the BLIT function.  Sends the texels to the FX unit.
  *
  * The pseudocode for the main function (DRAW) is as follows:
@@ -338,7 +368,7 @@
  *     SPANOUT.send(block)
  */
 
-#define UHARDDOOM_SPAN_STATE				0x0a00
+#define UHARDDOOM_SPAN_STATE				0x0a80
 #define UHARDDOOM_SPAN_STATE_DRAW_LENGTH_MASK		0x0000ffff
 #define UHARDDOOM_SPAN_STATE_DRAW_XOFF_MASK		0x003f0000
 #define UHARDDOOM_SPAN_STATE_DRAW_XOFF_SHIFT		16
@@ -346,45 +376,85 @@
 #define UHARDDOOM_SPAN_STATE_SPANLOCK			0x10000000
 #define UHARDDOOM_SPAN_STATE_MASK			0x103fffff
 /* The virtual base address of the source.  */
-#define UHARDDOOM_SPAN_SRC_PTR				0x0a04
+#define UHARDDOOM_SPAN_SRC_PTR				0x0a84
 /* The pitch of the source.  */
-#define UHARDDOOM_SPAN_SRC_PITCH			0x0a08
+#define UHARDDOOM_SPAN_SRC_PITCH			0x0a88
 /* The mask of the source uv coords.  */
-#define UHARDDOOM_SPAN_UVMASK				0x0a0c
+#define UHARDDOOM_SPAN_UVMASK				0x0a8c
 #define UHARDDOOM_SPAN_UVMASK_MASK			0x00001f1f
-#define UHARDDOOM_SPAN_USTART				0x0a10
-#define UHARDDOOM_SPAN_VSTART				0x0a14
-#define UHARDDOOM_SPAN_USTEP				0x0a18
-#define UHARDDOOM_SPAN_VSTEP				0x0a1c
+#define UHARDDOOM_SPAN_USTART				0x0a90
+#define UHARDDOOM_SPAN_VSTART				0x0a94
+#define UHARDDOOM_SPAN_USTEP				0x0a98
+#define UHARDDOOM_SPAN_VSTEP				0x0a9c
 
-/* Section 2.10: SWR — surface write unit.  Gathers blocks from COL or FX,
+/* Section 2.11: SWR — surface write unit.  Gathers blocks from COL or FX,
  * possibly runs them through the TRANSMAP, writes them to memory.  */
 
 #define UHARDDOOM_SWR_STATE				0x0b00
-#define UHARDDOOM_SWR_STATE_DRAW_LENGTH_MASK		0x0000ffff
-#define UHARDDOOM_SWR_STATE_VERT_EN			0x00010000
-#define UHARDDOOM_SWR_STATE_COL_EN			0x00020000
-#define UHARDDOOM_SWR_STATE_TRANS_EN			0x00040000
-#define UHARDDOOM_SWR_STATE_BUF_FULL			0x00080000
-#define UHARDDOOM_SWR_STATE_BUF_POS_MASK		0x07f00000
-#define UHARDDOOM_SWR_STATE_BUF_POS_SHIFT		20
-/* If 1, pending FELOCK, COLLOCK, SPANLOCK.  */
+#define UHARDDOOM_SWR_STATE_DRAW_LENGTH_MASK		0x000007ff
+#define UHARDDOOM_SWR_STATE_VERT_EN			0x00001000
+#define UHARDDOOM_SWR_STATE_COL_EN			0x00002000
+#define UHARDDOOM_SWR_STATE_TRANS_EN			0x00004000
+#define UHARDDOOM_SWR_STATE_TRANS_POS_MASK		0x007f0000
+#define UHARDDOOM_SWR_STATE_TRANS_POS_SHIFT		16
+#define UHARDDOOM_SWR_STATE_SRC_BUF_FULL		0x01000000
+#define UHARDDOOM_SWR_STATE_DST_BUF_FULL		0x02000000
+/* If 1, pending FELOCK, SRDLOCK, COLLOCK, SPANLOCK.  */
 #define UHARDDOOM_SWR_STATE_FELOCK			0x10000000
-#define UHARDDOOM_SWR_STATE_COLLOCK			0x20000000
-#define UHARDDOOM_SWR_STATE_SPANLOCK			0x40000000
-#define UHARDDOOM_SWR_STATE_MASK			0x77ffffff
+#define UHARDDOOM_SWR_STATE_SRDLOCK			0x20000000
+#define UHARDDOOM_SWR_STATE_COLLOCK			0x40000000
+#define UHARDDOOM_SWR_STATE_SPANLOCK			0x80000000
+#define UHARDDOOM_SWR_STATE_MASK			0xf37f77ff
 #define UHARDDOOM_SWR_TRANSMAP_PTR			0x0b04
 #define UHARDDOOM_SWR_DST_PTR				0x0b08
+#define UHARDDOOM_SWR_DST_PTR_MASK			0xffffffc0
 #define UHARDDOOM_SWR_DST_PITCH				0x0b0c
+#define UHARDDOOM_SWR_DST_PITCH_MASK			0xffffffc0
+#define UHARDDOOM_SWR_VERT_PTR				0x0b10
+#define UHARDDOOM_SWR_VERT_STATE			0x0b14
+#define UHARDDOOM_SWR_VERT_STATE_HEIGHT_MASK		0x0000ffff
+#define UHARDDOOM_SWR_VERT_STATE_POS_MASK		0xffff0000
+#define UHARDDOOM_SWR_VERT_STATE_POS_SHIFT		16
+#define UHARDDOOM_SWR_VERT_STATE_MASK			0xffffffff
 /* 64-bit */
-#define UHARDDOOM_SWR_MASK				0x0b10
-#define UHARDDOOM_SWR_DATA(i)				(0x0b40 + (i))
+#define UHARDDOOM_SWR_BLOCK_MASK			0x0b18
+/* The three buffers: source data, orignal destination data, post-TRANSMAP
+ * data.  If TRANSMAP is not enabled, only SRC_BUF is used.  */
+#define UHARDDOOM_SWR_SRC_BUF(i)			(0x0b40 + (i))
+#define UHARDDOOM_SWR_DST_BUF(i)			(0x0b80 + (i))
+#define UHARDDOOM_SWR_TRANS_BUF(i)			(0x0bc0 + (i))
 
 /* Section 2.11: FX — the effects unit.  Gets raw texture data from the SPAN
  * unit, or draws with a constant color.  Applies colormap for spans, handles
  * solid drawing, does the fuzz effect.  */
 
-/* XXX */
+#define UHARDDOOM_FX_STATE				0x0c00
+#define UHARDDOOM_FX_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_FX_STATE_DRAW_SKIP_ALWAYS		0x00010000
+#define UHARDDOOM_FX_STATE_DRAW_SKIP_NON_FIRST		0x00020000
+#define UHARDDOOM_FX_STATE_DRAW_CMAP_EN			0x00100000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_EN			0x00200000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_MASK		0x00c00000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_SHIFT		22
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_SRD		0x01000000
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_SPAN		0x02000000
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_DONE		0x04000000
+#define UHARDDOOM_FX_STATE_LOAD_CMAP			0x10000000
+#define UHARDDOOM_FX_STATE_LOAD_FUZZ			0x20000000
+#define UHARDDOOM_FX_STATE_LOAD_CNT_MASK		0xc0000000
+#define UHARDDOOM_FX_STATE_LOAD_CNT_SHIFT		30
+#define UHARDDOOM_FX_STATE_MASK				0xf7f3ffff
+#define UHARDDOOM_FX_SKIP				0x0c04
+#define UHARDDOOM_FX_SKIP_BEGIN_MASK			0x0000003f
+#define UHARDDOOM_FX_SKIP_END_MASK			0x00003f00
+#define UHARDDOOM_FX_SKIP_END_SHIFT			8
+#define UHARDDOOM_FX_SKIP_MASK				0x00003f3f
+#define UHARDDOOM_FX_COL(i)				(0xd00 + (i) * 4)
+#define UHARDDOOM_FX_COL_FUZZPOS_MASK			0x0000003f
+#define UHARDDOOM_FX_COL_ENABLE				0x00000080
+#define UHARDDOOM_FX_COL_MASK				0x000000bf
+#define UHARDDOOM_FX_BUF(i)				(0xe00 + (i))
+#define UHARDDOOM_FX_CMAP(i)				(0xf00 + (i))
 
 /* Section 2.12: COL — the column reader.  Used to read texture data for
  * the DRAW_COLUMN function, and to read source data for the WIPE function.
@@ -401,7 +471,12 @@
 #define UHARDDOOM_COL_STATE_XOFF_SHIFT			20
 /* If 1, waiting on COLLOCK.  */
 #define UHARDDOOM_COL_STATE_COLLOCK			0x10000000
-#define UHARDDOOM_COL_STATE_MASK			0x13f1ffff
+/* Set if LOAD_CMAP_A in progresss.  */
+#define UHARDDOOM_COL_STATE_LOAD_CMAP_A			0x20000000
+/* The current position (in blocks) for LOAD_CMAP_A.  */
+#define UHARDDOOM_COL_STATE_CMAP_A_POS_MASK		0xc0000000
+#define UHARDDOOM_COL_STATE_CMAP_A_POS_SHIFT		30
+#define UHARDDOOM_COL_STATE_MASK			0xf3f1ffff
 /* Per-column command state, to be moved to proper column RAM by COL_SETUP.  */
 #define UHARDDOOM_COL_STAGE_CMAP_B_PTR			0x2004
 #define UHARDDOOM_COL_STAGE_SRC_PTR			0x2008
@@ -431,7 +506,7 @@
 
 /* Section 2.13: CACHEs.  */
 
-/* XXX */
+/* XXX: destined for 0x8000:0x10000 */
 
 
 /* Section 3: Page tables.  */
@@ -489,12 +564,13 @@
 /* Read to get the next command word.  */
 #define UHARDDOOM_FEMEM_CMD_FETCH			0x00000308
 /* Write to submit a command to a FIFO.  */
-#define UHARDDOOM_FEMEM_COLCMD(t)			(0x00000400 + (t) * 4)
+#define UHARDDOOM_FEMEM_SRDCMD(t)			(0x00000400 + (t) * 4)
 #define UHARDDOOM_FEMEM_SPANCMD(t)			(0x00000500 + (t) * 4)
-#define UHARDDOOM_FEMEM_FXCMD(t)			(0x00000600 + (t) * 4)
-#define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000700 + (t) * 4)
+#define UHARDDOOM_FEMEM_COLCMD(t)			(0x00000600 + (t) * 4)
+#define UHARDDOOM_FEMEM_FXCMD(t)			(0x00000700 + (t) * 4)
+#define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000800 + (t) * 4)
 /* Read to wait for a signal from SWR on the FELOCK interface.  */
-#define UHARDDOOM_FEMEM_FELOCK				0x00000800
+#define UHARDDOOM_FEMEM_FELOCK				0x00000900
 /* Write to bump a STATS counter.  */
 #define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000c00 + (t) * 4)
 /* The code RAM — read only from the core.  */
@@ -507,44 +583,20 @@
 
 /* Section 7: Internal commands.  */
 
-/* Section 7.1: COLCMD — COL unit internal commands.  */
+/* Section 7.1: SRDCMD — SRD unit internal commands.  */
 
-#define UHARDDOOM_COLCMD_TYPE_NOP			0x0
-/* Per-column colormap B virtual address.  */
-#define UHARDDOOM_COLCMD_TYPE_COL_CMAP_B_PTR		0x1
-/* Per-column source virtual address.  */
-#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PTR		0x2
-/* Per-column source pitch.  */
-#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PITCH		0x3
-/* Per-column U coord.  */
-#define UHARDDOOM_COLCMD_TYPE_COL_USTART		0x4
-#define UHARDDOOM_COLCMD_TYPE_COL_USTEP			0x5
-/* Sets up a column (use after the above per-column commands).  */
-#define UHARDDOOM_COLCMD_TYPE_COL_SETUP			0x6
-/* Colormap A virtual address.  */
-#define UHARDDOOM_COLCMD_TYPE_CMAP_A_PTR		0x7
-/* Emits a given number of blocks to the SWR.  */
-#define UHARDDOOM_COLCMD_TYPE_DRAW			0x8
-/* Waits for a signal from SWR on the COLLOCK interface, then flushes cache.  */
-#define UHARDDOOM_COLCMD_TYPE_COLLOCK			0x9
-#define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en, uy_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14 | (uy_en) << 15)
-/* The column X coord in the block.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
-/* U coord mask.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_ULOG(cmd)	((cmd) >> 8 & 0x1f)
-/* Column enable — if unset, this column will be disabled and skipped in
- * blocks sent to SWR.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_COL_EN(cmd)	((cmd) >> 13 & 1)
-/* Colormap B enable.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_CMAP_B_EN(cmd)	((cmd) >> 14 & 1)
-/* If enabled, U is mapped to y coord within the source (ie. multiplied by
- * source pitch), otherwise x.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_UY_EN(cmd)	((cmd) >> 15 & 1)
-#define UHARDDOOM_COLCMD_DATA_DRAW(len, cmap_a_en)	((len) | (cmap_a_en) << 16)
-/* Number of blocks to be drawn.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+#define UHARDDOOM_SRDCMD_TYPE_NOP			0x0
+/* The virtual base address of the source.  */
+#define UHARDDOOM_SRDCMD_TYPE_SRC_PTR			0x1
+/* The pitch of the source.  */
+#define UHARDDOOM_SRDCMD_TYPE_SRC_PITCH			0x2
+/* Reads blocks.  */
+#define UHARDDOOM_SRDCMD_TYPE_READ			0x3
+#define UHARDDOOM_SRDCMD_TYPE_SRDLOCK			0x4
+#define UHARDDOOM_SRDCMD_DATA_READ(len, col)		((len) | (col) << 16)
+#define UHARDDOOM_SRDCMD_DATA_EXTR_READ_LENGTH(cmd)	((cmd) & 0xffff)
 /* Colormap A enable.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_CMAP_A_EN(cmd)	((cmd) >> 16 & 1)
+#define UHARDDOOM_SRDCMD_DATA_EXTR_READ_COL(cmd)	((cmd) >> 16 & 1)
 
 /* Section 7.2: SPANCMD — SPAN unit internal commands.  */
 
@@ -574,11 +626,82 @@
 /* Number of dummy pixels to be sent at the beginning of the first block.  */
 #define UHARDDOOM_SPANCMD_DATA_EXTR_DRAW_XOFF(cmd)	((cmd) >> 16 & 0x3f)
 
-/* Section 7.3: FXCMD — FX unit internal commands.  */
+/* Section 7.3: COLCMD — COL unit internal commands.  */
 
-/* XXX */
+#define UHARDDOOM_COLCMD_TYPE_NOP			0x0
+/* Per-column colormap B virtual address.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_CMAP_B_PTR		0x1
+/* Per-column source virtual address.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PTR		0x2
+/* Per-column source pitch.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SRC_PITCH		0x3
+/* Per-column U coord.  */
+#define UHARDDOOM_COLCMD_TYPE_COL_USTART		0x4
+#define UHARDDOOM_COLCMD_TYPE_COL_USTEP			0x5
+/* Sets up a column (use after the above per-column commands).  */
+#define UHARDDOOM_COLCMD_TYPE_COL_SETUP			0x6
+/* Load colormap A from SRD.  */
+#define UHARDDOOM_COLCMD_TYPE_LOAD_CMAP_A		0x7
+/* Emits a given number of blocks to the SWR.  */
+#define UHARDDOOM_COLCMD_TYPE_DRAW			0x8
+/* Waits for a signal from SWR on the COLLOCK interface, then flushes cache.  */
+#define UHARDDOOM_COLCMD_TYPE_COLLOCK			0x9
+#define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en, uy_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14 | (uy_en) << 15)
+/* The column X coord in the block.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
+/* U coord mask.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_ULOG(cmd)	((cmd) >> 8 & 0x1f)
+/* Column enable — if unset, this column will be disabled and skipped in
+ * blocks sent to SWR.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_COL_EN(cmd)	((cmd) >> 13 & 1)
+/* Colormap B enable.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_CMAP_B_EN(cmd)	((cmd) >> 14 & 1)
+/* If enabled, U is mapped to y coord within the source (ie. multiplied by
+ * source pitch), otherwise x.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_UY_EN(cmd)	((cmd) >> 15 & 1)
+#define UHARDDOOM_COLCMD_DATA_DRAW(len, cmap_a_en)	((len) | (cmap_a_en) << 16)
+/* Number of blocks to be drawn.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+/* Colormap A enable.  */
+#define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_CMAP_A_EN(cmd)	((cmd) >> 16 & 1)
 
-/* Section 7.4: SWRCMD — SWR unit internal commands.  */
+/* Section 7.4: FXCMD — FX unit internal commands.  */
+
+#define UHARDDOOM_FXCMD_TYPE_NOP			0x0
+/* Fills the whole buffer with a single color.  */
+#define UHARDDOOM_FXCMD_TYPE_FILL_COLOR			0x1
+/* Loads 4 blocks from FXIN as the colormap.  */
+#define UHARDDOOM_FXCMD_TYPE_LOAD_CMAP			0x2
+/* Loads 2 blocks from FXIN to the buffer.  */
+#define UHARDDOOM_FXCMD_TYPE_LOAD_FUZZ			0x3
+/* Sets FUZZ state for a column.  */
+#define UHARDDOOM_FXCMD_TYPE_COL_SETUP			0x4
+/* Sets how many columns should be masked off at start/end.  */
+#define UHARDDOOM_FXCMD_TYPE_SKIP			0x5
+/* Draws stuff.  */
+#define UHARDDOOM_FXCMD_TYPE_DRAW			0x6
+#define UHARDDOOM_FXCMD_DATA_COL_SETUP(pos, en)		((pos) | (en) << 7)
+#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_FUZZPOS(cmd)	((cmd) & 0x3f)
+#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_ENABLE(cmd)	((cmd) >> 7 & 1)
+#define UHARDDOOM_FXCMD_DATA_SKIP(b, e)			((b) | (e) << 8)
+#define UHARDDOOM_FXCMD_DATA_EXTR_SKIP_BEGIN(cmd)	((cmd) & 0x3f)
+#define UHARDDOOM_FXCMD_DATA_EXTR_SKIP_END(cmd)		((cmd) >> 8 & 0x3f)
+#define UHARDDOOM_FXCMD_DATA_DRAW(len, sa, ce, fe, srd, span)	((len) | (sa) << 16 | (ce) << 20 | (fe) << 21 | (srd) << 24 | (span) << 25)
+/* Number of blocks to be drawn.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
+/* If true, SKIP will be applied to all blocks; otherwise, BEGIN will
+ * only be applied to the first block, and END only to the last block.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_SKIP_ALWAYS	((cmd) >> 16 & 1)
+/* If true, the pixels sent to SWR will be translated through the colormap.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_CMAP_EN		((cmd) >> 20 & 1)
+/* Extra-special DRAW_FUZZ mode.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FUZZ_EN		((cmd) >> 21 & 1)
+/* Selects the data source.  If neither is set, just draw whatever is in
+ * the buffer.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SRD	((cmd) >> 24 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SPAN	((cmd) >> 25 & 1)
+
+/* Section 7.5: SWRCMD — SWR unit internal commands.  */
 
 #define UHARDDOOM_SWRCMD_TYPE_NOP			0x0
 /* The virtual base address of the TRANSMAP.  */
@@ -595,13 +718,15 @@
 #define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x6
 /* Send a signal on SPANLOCK.  */
 #define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x7
-#define UHARDDOOM_SWRCMD_DATA_DRAW(len, v_en, c_en, t_en)	((len) | (v_en) << 16 | (c_en) << 17 | (t_en) << 18)
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
-/* If set, draw vertically.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_VERT_EN(cmd)	((cmd) >> 16 & 1)
+#define UHARDDOOM_SWRCMD_DATA_DRAW(height, len, v_en, c_en, t_en)	((height) | (len) << 16| (v_en) << 28 | (c_en) << 29 | (t_en) << 30)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_HEIGHT(cmd)	((cmd) & 0xffff)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) >> 16 & 0x7ff)
+/* If set, fetch a new block for every vertical step.  Otherwise, only fetch
+ * for horizontla steps.  */
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_VERT_EN(cmd)	((cmd) >> 28 & 1)
 /* If set, draw from COL, otherwise from FX.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 17 & 1)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 29 & 1)
 /* If set, enable the TRANSMAP.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_TRANS_EN(cmd)	((cmd) >> 18 & 1)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_TRANS_EN(cmd)	((cmd) >> 30 & 1)
 
 #endif

@@ -52,16 +52,6 @@
 /* The reset register.  Punching 1 will clear all pending work and/or
  * cached data.  */
 #define UHARDDOOM_RESET					0x0004
-#define UHARDDOOM_RESET_FIFO_COLCMD			0x00010000
-#define UHARDDOOM_RESET_FIFO_SPANCMD			0x00020000
-#define UHARDDOOM_RESET_FIFO_FXCMD			0x00040000
-#define UHARDDOOM_RESET_FIFO_SWRCMD			0x00080000
-#define UHARDDOOM_RESET_FIFO_FELOCK			0x00100000
-#define UHARDDOOM_RESET_FIFO_COLLOCK			0x00200000
-#define UHARDDOOM_RESET_FIFO_SPANLOCK			0x00400000
-#define UHARDDOOM_RESET_FIFO_SPANOUT			0x01000000
-#define UHARDDOOM_RESET_FIFO_COLOUT			0x02000000
-#define UHARDDOOM_RESET_FIFO_FXOUT			0x04000000
 #define UHARDDOOM_RESET_BATCH				0x00000001
 #define UHARDDOOM_RESET_JOB				0x00000002
 #define UHARDDOOM_RESET_CMD				0x00000004
@@ -274,6 +264,8 @@
 #define UHARDDOOM_FE_ERROR_DATA_B			0x0124
 /* The FE error code (set when FE_ERROR interrupt is triggered).  */
 #define UHARDDOOM_FE_ERROR_CODE				0x0128
+/* Unknown user command.  Data A is cmd pointer, data B is command header.  */
+#define UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND	0x00000000
 /* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
@@ -536,6 +528,14 @@
 
 /* Section 4: The driver commands.  */
 
+#define UHARDDOOM_USER_CMD_HEADER_EXTR_TYPE(w)		((w) & 0xff)
+#define UHARDDOOM_USER_CMD_TYPE_FILL_RECT		0x0
+#define UHARDDOOM_USER_CMD_TYPE_DRAW_LINE		0x1
+#define UHARDDOOM_USER_CMD_TYPE_BLIT			0x2
+#define UHARDDOOM_USER_CMD_TYPE_WIPE			0x3
+#define UHARDDOOM_USER_CMD_TYPE_DRAW_COLUMNS		0x4
+#define UHARDDOOM_USER_CMD_TYPE_DRAW_FUZZ		0x5
+#define UHARDDOOM_USER_CMD_TYPE_DRAW_SPANS		0x6
 /* XXX */
 
 

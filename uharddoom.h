@@ -266,6 +266,10 @@
 #define UHARDDOOM_FE_ERROR_CODE				0x0128
 /* Unknown user command.  Data A is cmd pointer, data B is command header.  */
 #define UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND	0x00000000
+/* Unaligned dst pointer.  Data A is cmd pointer, data B is dst pointer.  */
+#define UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED	0x00000001
+/* Unaligned dst pitch.  Data A is cmd pointer, data B is dst pitch.  */
+#define UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED	0x00000002
 /* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
@@ -528,6 +532,7 @@
 
 /* Section 4: The driver commands.  */
 
+/* The command type.  Always in word 0.  */
 #define UHARDDOOM_USER_CMD_HEADER_EXTR_TYPE(w)		((w) & 0xff)
 #define UHARDDOOM_USER_CMD_TYPE_FILL_RECT		0x0
 #define UHARDDOOM_USER_CMD_TYPE_DRAW_LINE		0x1
@@ -536,6 +541,35 @@
 #define UHARDDOOM_USER_CMD_TYPE_DRAW_COLUMNS		0x4
 #define UHARDDOOM_USER_CMD_TYPE_DRAW_FUZZ		0x5
 #define UHARDDOOM_USER_CMD_TYPE_DRAW_SPANS		0x6
+
+/* Fill rectangle.  Fills the specified rectangle with a solid color.  */
+/* Word 0: command type and fill color.  */
+#define UHARDDOOM_USER_FILL_RECT_HEADER(color)		(UHARDDOOM_USER_CMD_TYPE_FILL_RECT | (color) << 8)
+#define UHARDDOOM_USER_FILL_RECT_HEADER_EXTR_COLOR(w)	((w) >> 8 & 0xff)
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: X and Y coords of the left upper corner.  */
+#define UHARDDOOM_USER_FILL_RECT_W3(x, y)		((x) | (y) << 16)
+#define UHARDDOOM_USER_FILL_RECT_W3_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_FILL_RECT_W3_EXTR_Y(w)		((w) >> 16 & 0xffff)
+/* Word 4: width and height of the rectangle.  */
+#define UHARDDOOM_USER_FILL_RECT_W4(w, h)		((w) | (h) << 16)
+#define UHARDDOOM_USER_FILL_RECT_W4_EXTR_W(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_FILL_RECT_W4_EXTR_H(w)		((w) >> 16 & 0xffff)
+
+/* Draw line.  */
+#define UHARDDOOM_USER_DRAW_LINE_HEADER(color)		(UHARDDOOM_USER_CMD_TYPE_DRAW_LINE | (color) << 8)
+#define UHARDDOOM_USER_DRAW_LINE_HEADER_EXTR_COLOR(w)	((w) >> 8 & 0xff)
+/* XXX */
+/* Blit.  */
+/* XXX */
+/* Wipe.  */
+/* XXX */
+/* Draw columns.  */
+/* XXX */
+/* Draw fuzz.  */
+/* XXX */
+/* Draw spans.  */
 /* XXX */
 
 
@@ -543,6 +577,8 @@
 
 /* The block size used for drawing etc (64 pixels).  */
 #define UHARDDOOM_BLOCK_SIZE				0x40
+#define UHARDDOOM_BLOCK_MASK				0x3f
+#define UHARDDOOM_BLOCK_SHIFT				6
 #define UHARDDOOM_COLORMAP_SIZE				0x100
 
 
@@ -722,7 +758,7 @@
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_HEIGHT(cmd)	((cmd) & 0xffff)
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) >> 16 & 0x7ff)
 /* If set, fetch a new block for every vertical step.  Otherwise, only fetch
- * for horizontla steps.  */
+ * for horizontal steps.  */
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_VERT_EN(cmd)	((cmd) >> 28 & 1)
 /* If set, draw from COL, otherwise from FX.  */
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 29 & 1)

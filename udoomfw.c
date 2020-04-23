@@ -1,6 +1,7 @@
 #include "uharddoom.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdnoreturn.h>
 
 __asm__(
@@ -43,13 +44,52 @@ static volatile uint32_t *const CMD_PTR = (void *)UHARDDOOM_FEMEM_CMD_PTR;
 static volatile uint32_t *const CMD_END = (void *)UHARDDOOM_FEMEM_CMD_END;
 static volatile uint32_t *const CMD_FETCH = (void *)UHARDDOOM_FEMEM_CMD_FETCH;
 
+static volatile uint32_t *const SRDCMD = (void *)UHARDDOOM_FEMEM_SRDCMD(0);
+static volatile uint32_t *const SPANCMD = (void *)UHARDDOOM_FEMEM_SPANCMD(0);
+static volatile uint32_t *const COLCMD = (void *)UHARDDOOM_FEMEM_COLCMD(0);
+static volatile uint32_t *const FXCMD = (void *)UHARDDOOM_FEMEM_FXCMD(0);
+static volatile uint32_t *const SWRCMD = (void *)UHARDDOOM_FEMEM_SWRCMD(0);
+
 static uint32_t cmd_ptr;
 
+static noreturn void error(int code, uint32_t data_a, uint32_t data_b) {
+	*FE_ERROR_DATA_A = data_a;
+	*FE_ERROR_DATA_B = data_b;
+	*FE_ERROR_CODE = code;
+	__builtin_unreachable();
+}
+
 static void cmd_fill_rect(uint32_t cmd_header) {
-	/* XXX */
+	FXCMD[UHARDDOOM_FXCMD_TYPE_FILL_COLOR] = UHARDDOOM_USER_FILL_RECT_HEADER_EXTR_COLOR(cmd_header);
+	uint32_t dst_ptr = *CMD_FETCH;
+	if (dst_ptr & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED, cmd_ptr, dst_ptr);
+	uint32_t dst_pitch = *CMD_FETCH;
+	if (dst_pitch & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED, cmd_ptr, dst_pitch);
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PITCH] = dst_pitch;
+	uint32_t w3 = *CMD_FETCH;
+	uint32_t x = UHARDDOOM_USER_FILL_RECT_W3_EXTR_X(w3);
+	uint32_t y = UHARDDOOM_USER_FILL_RECT_W3_EXTR_Y(w3);
+	uint32_t w4 = *CMD_FETCH;
+	uint32_t w = UHARDDOOM_USER_FILL_RECT_W4_EXTR_W(w4);
+	uint32_t h = UHARDDOOM_USER_FILL_RECT_W4_EXTR_H(w4);
+	dst_ptr += y * dst_pitch;
+	dst_ptr += x & ~UHARDDOOM_BLOCK_MASK;
+	x &= UHARDDOOM_BLOCK_MASK;
+	uint32_t skip_end = -(w + x) & UHARDDOOM_BLOCK_MASK;
+	uint32_t blocks = (w + x + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
+	FXCMD[UHARDDOOM_FXCMD_TYPE_SKIP] = UHARDDOOM_FXCMD_DATA_SKIP(x, skip_end);
+	while (h--) {
+		FXCMD[UHARDDOOM_FXCMD_TYPE_DRAW] = UHARDDOOM_FXCMD_DATA_DRAW(blocks, false, false, false, false, false);
+		SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr;
+		SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(1, blocks, false, false, false);
+		dst_ptr += dst_pitch;
+	}
 }
 
 static void cmd_draw_line(uint32_t cmd_header) {
+	FXCMD[UHARDDOOM_FXCMD_TYPE_FILL_COLOR] = UHARDDOOM_USER_DRAW_LINE_HEADER_EXTR_COLOR(cmd_header);
 	/* XXX */
 }
 
@@ -102,9 +142,7 @@ noreturn void main() {
 					cmd_draw_spans(cmd_header);
 					break;
 				default:
-					*FE_ERROR_DATA_A = cmd_ptr;
-					*FE_ERROR_DATA_B = cmd_header;
-					*FE_ERROR_CODE = UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND;
+					error(UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND, cmd_ptr, cmd_header);
 			}
 		}
 		*JOB_DONE = 0;

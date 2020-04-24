@@ -587,8 +587,8 @@
 #define UHARDDOOM_USER_BLIT_W4(w, h)			((w) | (h) << 16)
 #define UHARDDOOM_USER_BLIT_W4_EXTR_W(w)		((w) & 0xffff)
 #define UHARDDOOM_USER_BLIT_W4_EXTR_H(w)		((w) >> 16 & 0xffff)
-/* Word 5: destination pointer.  */
-/* Word 6: destination pitch.  */
+/* Word 5: source pointer.  */
+/* Word 6: source pitch.  */
 /* Word 7: X and Y coords of the source left upper corner.  */
 #define UHARDDOOM_USER_BLIT_W7(x, y)			((x) | (y) << 16)
 #define UHARDDOOM_USER_BLIT_W7_EXTR_X(w)		((w) & 0xffff)
@@ -599,7 +599,23 @@
 #define UHARDDOOM_USER_BLIT_W8_EXTR_H(w)		((w) >> 16 & 0xffff)
 
 /* Wipe.  */
-/* XXX */
+/* Word 0: just the command type.  */
+#define UHARDDOOM_USER_WIPE_HEADER			UHARDDOOM_USER_CMD_TYPE_WIPE
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: X and Y coords of the destination left upper corner.  */
+#define UHARDDOOM_USER_WIPE_W3(x, y)			((x) | (y) << 16)
+#define UHARDDOOM_USER_WIPE_W3_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_WIPE_W3_EXTR_Y(w)		((w) >> 16 & 0xffff)
+/* Word 4: width and height of the destination rectangle.  */
+#define UHARDDOOM_USER_WIPE_W4(w, h)			((w) | (h) << 16)
+#define UHARDDOOM_USER_WIPE_W4_EXTR_W(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_WIPE_W4_EXTR_H(w)		((w) >> 16 & 0xffff)
+/* Word 5: source A pointer.  */
+/* Word 6: source A pitch.  */
+/* Word 7: source B pointer.  */
+/* Word 8: source B pitch.  */
+/* Word 9 + i, i in range(dst_height): Y offset of a given column */
 
 /* Draw columns.  */
 /* XXX */
@@ -617,6 +633,7 @@
 #define UHARDDOOM_BLOCK_SIZE				0x40
 #define UHARDDOOM_BLOCK_MASK				0x3f
 #define UHARDDOOM_BLOCK_SHIFT				6
+#define UHARDDOOM_COORD_MASK				0xffff
 #define UHARDDOOM_COLORMAP_SIZE				0x100
 
 

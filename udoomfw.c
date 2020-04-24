@@ -51,7 +51,6 @@ static volatile uint32_t *const FXCMD = (void *)UHARDDOOM_FEMEM_FXCMD(0);
 static volatile uint32_t *const SWRCMD = (void *)UHARDDOOM_FEMEM_SWRCMD(0);
 
 static uint32_t cmd_ptr;
-uint32_t aaa = 123;
 
 static noreturn void error(int code, uint32_t data_a, uint32_t data_b) {
 	*FE_ERROR_DATA_A = data_a;
@@ -180,7 +179,11 @@ static void cmd_blit(uint32_t cmd_header) {
 	uint32_t ulog = UHARDDOOM_USER_BLIT_HEADER_EXTR_ULOG(cmd_header);
 	uint32_t vlog = UHARDDOOM_USER_BLIT_HEADER_EXTR_VLOG(cmd_header);
 	uint32_t dst_ptr = *CMD_FETCH;
+	if (dst_ptr & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED, cmd_ptr, dst_ptr);
 	uint32_t dst_pitch = *CMD_FETCH;
+	if (dst_pitch & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED, cmd_ptr, dst_pitch);
 	uint32_t w3 = *CMD_FETCH;
 	uint32_t dst_x = UHARDDOOM_USER_BLIT_W3_EXTR_X(w3);
 	uint32_t dst_y = UHARDDOOM_USER_BLIT_W3_EXTR_Y(w3);
@@ -200,7 +203,7 @@ static void cmd_blit(uint32_t cmd_header) {
 	dst_ptr += dst_x & ~UHARDDOOM_BLOCK_MASK;
 	dst_x &= UHARDDOOM_BLOCK_MASK;
 	/* Decide on the path.  */
-	if (src_w == dst_w && src_h == dst_h && (src_x & UHARDDOOM_BLOCK_MASK) == dst_x && ulog == 0x10 && vlog == 0x10) {
+	if (src_w == dst_w && src_h == dst_h && (src_x & UHARDDOOM_BLOCK_MASK) == dst_x && ulog == 0x10 && vlog == 0x10 && !(src_ptr & UHARDDOOM_BLOCK_MASK) && !(src_pitch & UHARDDOOM_BLOCK_MASK)) {
 		/* Simple case, no scaling, no intra-block shift — use SRD.  */
 		src_ptr += src_y * src_pitch;
 		src_ptr += src_x & ~UHARDDOOM_BLOCK_MASK;
@@ -253,9 +256,161 @@ static void cmd_blit(uint32_t cmd_header) {
 	}
 }
 
+#define HEAP_MAX 0x400
+
+uint32_t heap[HEAP_MAX];
+uint32_t heap_size;
+
+static inline uint32_t heap_left() {
+	return HEAP_MAX - heap_size;
+}
+static inline bool heap_empty() {
+	return heap_size == 0;
+}
+
+static inline uint32_t heap_pidx(uint32_t idx) {
+	return (idx - 1) >> 1;
+}
+
+static inline uint32_t heap_cidx(uint32_t idx) {
+	return (idx << 1) + 1;
+}
+
+static void heap_put(uint32_t word) {
+	uint32_t idx = heap_size++;
+	while (idx && word < heap[heap_pidx(idx)]) {
+		heap[idx] = heap[heap_pidx(idx)];
+		idx = heap_pidx(idx);
+	}
+	heap[idx] = word;
+}
+
+static uint32_t heap_get() {
+	uint32_t res = heap[0];
+	uint32_t word = heap[--heap_size];
+	uint32_t idx = 0;
+	while (heap_cidx(idx) < heap_size) {
+		if (heap_cidx(idx) + 1 < heap_size) {
+			/* Two children.  */
+			uint32_t c0 = heap[heap_cidx(idx)];
+			uint32_t c1 = heap[heap_cidx(idx) + 1];
+			if (c0 < word && c0 < c1) {
+				heap[idx] = c0;
+				idx = heap_cidx(idx);
+			} else if (c1 < word) {
+				heap[idx] = c1;
+				idx = heap_cidx(idx) + 1;
+			} else {
+				break;
+			}
+		} else {
+			/* One child.  */
+			if (heap[heap_cidx(idx)] < word) {
+				heap[idx] = heap[heap_cidx(idx)];
+				idx = heap_cidx(idx);
+			} else {
+				break;
+			}
+		}
+	}
+	heap[idx] = word;
+	return res;
+}
+
+enum {
+	WIPE_OP_START_A = 0,
+	WIPE_OP_STOP_A = 1,
+	WIPE_OP_START_B = 2,
+	WIPE_OP_STOP_B = 3,
+};
+
+#define WIPE_OP(op, x, y) ((y) << 16 | (op) << 8 | (x))
+
+static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr, uint32_t src_a_pitch, uint32_t src_b_ptr, uint32_t src_b_pitch) {
+	uint32_t active = 0;
+	uint32_t ylast = 0;
+	while (!heap_empty()) {
+		uint32_t opw = heap_get();
+		uint32_t opy = opw >> 16;
+		uint32_t op = opw >> 8 & 3;
+		uint32_t opx = opw & 0x3f;
+		if (opy != ylast && active) {
+			uint32_t num = opy - ylast;
+			COLCMD[UHARDDOOM_COLCMD_TYPE_DRAW] = UHARDDOOM_COLCMD_DATA_DRAW(num, false);
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr + opy * dst_pitch;
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(num, 1, true, true, false);
+		}
+		ylast = opy;
+		switch (op) {
+			case WIPE_OP_START_A:
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SRC_PTR] = src_a_ptr + opx;
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SRC_PITCH] = src_a_pitch;
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(opx, 0x10, true, false, true);
+				active++;
+				break;
+			case WIPE_OP_START_B:
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SRC_PTR] = src_b_ptr + opx;
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SRC_PITCH] = src_b_pitch;
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(opx, 0x10, true, false, true);
+				active++;
+				break;
+			case WIPE_OP_STOP_A:
+			case WIPE_OP_STOP_B:
+				COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(opx, 0x10, false, false, false);
+				active--;
+				break;
+		}
+	}
+}
+
 static void cmd_wipe(uint32_t cmd_header) {
-	/* XXX */
-	__builtin_trap();
+	uint32_t dst_ptr = *CMD_FETCH;
+	if (dst_ptr & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED, cmd_ptr, dst_ptr);
+	uint32_t dst_pitch = *CMD_FETCH;
+	if (dst_pitch & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED, cmd_ptr, dst_pitch);
+	uint32_t w3 = *CMD_FETCH;
+	uint32_t x = UHARDDOOM_USER_WIPE_W3_EXTR_X(w3);
+	uint32_t y = UHARDDOOM_USER_WIPE_W3_EXTR_Y(w3);
+	uint32_t w4 = *CMD_FETCH;
+	uint32_t w = UHARDDOOM_USER_WIPE_W4_EXTR_W(w4);
+	uint32_t h = UHARDDOOM_USER_WIPE_W4_EXTR_H(w4);
+	uint32_t src_a_ptr = *CMD_FETCH;
+	uint32_t src_a_pitch = *CMD_FETCH;
+	uint32_t src_b_ptr = *CMD_FETCH;
+	uint32_t src_b_pitch = *CMD_FETCH;
+	dst_ptr += y * dst_pitch;
+	src_a_ptr += y * src_a_pitch;
+	src_b_ptr += y * src_b_pitch;
+	dst_ptr += (x & ~UHARDDOOM_BLOCK_MASK);
+	src_a_ptr += (x & ~UHARDDOOM_BLOCK_MASK);
+	src_b_ptr += (x & ~UHARDDOOM_BLOCK_MASK);
+	x &= UHARDDOOM_BLOCK_MASK;
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_USTART] = 0;
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_USTEP] = 0x10000;
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PITCH] = dst_pitch;
+	while (w--) {
+		uint32_t yoff = *CMD_FETCH & UHARDDOOM_COORD_MASK;
+		if (yoff) {
+			heap_put(WIPE_OP(WIPE_OP_START_A, x, 0));
+			heap_put(WIPE_OP(WIPE_OP_STOP_A, x, yoff));
+		}
+		if (yoff != h) {
+			heap_put(WIPE_OP(WIPE_OP_START_B, x, yoff));
+			heap_put(WIPE_OP(WIPE_OP_STOP_B, x, h));
+		}
+		x++;
+		if (x == UHARDDOOM_BLOCK_SIZE) {
+			wipe_flush(dst_ptr, dst_pitch, src_a_ptr, src_a_pitch, src_b_ptr, src_b_pitch);
+			x = 0;
+			dst_ptr += UHARDDOOM_BLOCK_SIZE;
+			src_a_ptr += UHARDDOOM_BLOCK_SIZE;
+			src_b_ptr += UHARDDOOM_BLOCK_SIZE;
+		}
+	}
+	if (!heap_empty())
+		wipe_flush(dst_ptr, dst_pitch, src_a_ptr, src_a_pitch, src_b_ptr, src_b_pitch);
 }
 
 static void cmd_draw_columns(uint32_t cmd_header) {

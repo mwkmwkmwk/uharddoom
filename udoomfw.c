@@ -176,8 +176,56 @@ static void cmd_draw_line(uint32_t cmd_header) {
 }
 
 static void cmd_blit(uint32_t cmd_header) {
-	/* XXX */
-	__builtin_trap();
+	uint32_t ulog = UHARDDOOM_USER_BLIT_HEADER_EXTR_ULOG(cmd_header);
+	uint32_t vlog = UHARDDOOM_USER_BLIT_HEADER_EXTR_VLOG(cmd_header);
+	uint32_t dst_ptr = *CMD_FETCH;
+	uint32_t dst_pitch = *CMD_FETCH;
+	uint32_t w3 = *CMD_FETCH;
+	uint32_t dst_x = UHARDDOOM_USER_BLIT_W3_EXTR_X(w3);
+	uint32_t dst_y = UHARDDOOM_USER_BLIT_W3_EXTR_Y(w3);
+	uint32_t w4 = *CMD_FETCH;
+	uint32_t dst_w = UHARDDOOM_USER_BLIT_W4_EXTR_W(w4);
+	uint32_t dst_h = UHARDDOOM_USER_BLIT_W4_EXTR_H(w4);
+	uint32_t src_ptr = *CMD_FETCH;
+	uint32_t src_pitch = *CMD_FETCH;
+	uint32_t w7 = *CMD_FETCH;
+	uint32_t src_x = UHARDDOOM_USER_BLIT_W7_EXTR_X(w7);
+	uint32_t src_y = UHARDDOOM_USER_BLIT_W7_EXTR_Y(w7);
+	uint32_t w8 = *CMD_FETCH;
+	uint32_t src_w = UHARDDOOM_USER_BLIT_W8_EXTR_W(w8);
+	uint32_t src_h = UHARDDOOM_USER_BLIT_W8_EXTR_H(w8);
+	/* Adjust the pointers.  */
+	dst_ptr += dst_y * dst_pitch;
+	dst_ptr += dst_x & ~UHARDDOOM_BLOCK_MASK;
+	dst_x &= UHARDDOOM_BLOCK_MASK;
+	src_ptr += src_y * src_pitch;
+	src_ptr += src_x & ~UHARDDOOM_BLOCK_MASK;
+	src_x &= UHARDDOOM_BLOCK_MASK;
+	/* Decide on the path.  */
+	if (src_w == dst_w && src_h == dst_h && src_x == dst_x) {
+		/* Simple case, no scaling, no intra-block shift — use SRD.  */
+		/* Finish SWR work.  */
+		SWRCMD[UHARDDOOM_SWRCMD_TYPE_SRDLOCK] = 0;
+		SRDCMD[UHARDDOOM_SRDCMD_TYPE_SRDLOCK] = 0;
+		/* Prepare the skip.  */
+		uint32_t skip_end = -(dst_w + dst_x) & UHARDDOOM_BLOCK_MASK;
+		uint32_t blocks = (dst_w + dst_x + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
+		FXCMD[UHARDDOOM_FXCMD_TYPE_SKIP] = UHARDDOOM_FXCMD_DATA_SKIP(dst_x, skip_end);
+		SRDCMD[UHARDDOOM_SRDCMD_TYPE_SRC_PITCH] = UHARDDOOM_BLOCK_SIZE;
+		while (dst_h--) {
+			SRDCMD[UHARDDOOM_SRDCMD_TYPE_SRC_PTR] = src_ptr;
+			SRDCMD[UHARDDOOM_SRDCMD_TYPE_READ] = UHARDDOOM_SRDCMD_DATA_READ(blocks, false);
+			FXCMD[UHARDDOOM_FXCMD_TYPE_DRAW] = UHARDDOOM_FXCMD_DATA_DRAW(blocks, false, false, false, true, false);
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr;
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(1, blocks, false, false, false);
+			src_ptr += src_pitch;
+			dst_ptr += dst_pitch;
+		}
+	} else {
+		/* Hard case, use SPAN.  */
+		/* XXX */
+		__builtin_trap();
+	}
 }
 
 static void cmd_wipe(uint32_t cmd_header) {

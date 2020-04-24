@@ -344,7 +344,8 @@
 #define UHARDDOOM_SRD_SRC_PITCH				0x0a08
 
 /* Section 2.10: SPAN — the span reader.  Used to read texture data for
- * the DRAW_SPAN function, and to read source data for the BLIT function.  Sends the texels to the FX unit.
+ * the DRAW_SPAN function, and to read source data for the BLIT
+ * function.  Sends the texels to the FX unit.
  *
  * The pseudocode for the main function (DRAW) is as follows:
  *
@@ -572,7 +573,30 @@
 #define UHARDDOOM_USER_DRAW_LINE_W4_EXTR_Y(w)		((w) >> 16 & 0xffff)
 
 /* Blit.  */
-/* XXX */
+/* Word 0: command type and source UV mask.  */
+#define UHARDDOOM_USER_BLIT_HEADER(ulog, vlog)		(UHARDDOOM_USER_CMD_TYPE_BLIT | (ulog) << 16 | (vlog) << 24)
+#define UHARDDOOM_USER_BLIT_HEADER_EXTR_ULOG(w)		((w) >> 16 & 0x1f)
+#define UHARDDOOM_USER_BLIT_HEADER_EXTR_VLOG(w)		((w) >> 16 & 0x1f)
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: X and Y coords of the destination left upper corner.  */
+#define UHARDDOOM_USER_BLIT_W3(x, y)			((x) | (y) << 16)
+#define UHARDDOOM_USER_BLIT_W3_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_BLIT_W3_EXTR_Y(w)		((w) >> 16 & 0xffff)
+/* Word 4: width and height of the destination rectangle.  */
+#define UHARDDOOM_USER_BLIT_W4(w, h)			((w) | (h) << 16)
+#define UHARDDOOM_USER_BLIT_W4_EXTR_W(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_BLIT_W4_EXTR_H(w)		((w) >> 16 & 0xffff)
+/* Word 5: destination pointer.  */
+/* Word 6: destination pitch.  */
+/* Word 7: X and Y coords of the source left upper corner.  */
+#define UHARDDOOM_USER_BLIT_W7(x, y)			((x) | (y) << 16)
+#define UHARDDOOM_USER_BLIT_W7_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_BLIT_W7_EXTR_Y(w)		((w) >> 16 & 0xffff)
+/* Word 8: width and height of the source rectangle.  */
+#define UHARDDOOM_USER_BLIT_W8(w, h)			((w) | (h) << 16)
+#define UHARDDOOM_USER_BLIT_W8_EXTR_W(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_BLIT_W8_EXTR_H(w)		((w) >> 16 & 0xffff)
 
 /* Wipe.  */
 /* XXX */
@@ -764,10 +788,12 @@
 #define UHARDDOOM_SWRCMD_TYPE_DRAW			0x4
 /* Send a signal on FELOCK.  */
 #define UHARDDOOM_SWRCMD_TYPE_FELOCK			0x5
+/* Send a signal on SRDLOCK.  */
+#define UHARDDOOM_SWRCMD_TYPE_SRDLOCK			0x6
 /* Send a signal on COLLOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x6
+#define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x7
 /* Send a signal on SPANLOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x7
+#define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x8
 #define UHARDDOOM_SWRCMD_DATA_DRAW(height, len, v_en, c_en, t_en)	((height) | (len) << 16| (v_en) << 28 | (c_en) << 29 | (t_en) << 30)
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_HEIGHT(cmd)	((cmd) & 0xffff)
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) >> 16 & 0x7ff)

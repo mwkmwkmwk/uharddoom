@@ -51,6 +51,7 @@ static volatile uint32_t *const FXCMD = (void *)UHARDDOOM_FEMEM_FXCMD(0);
 static volatile uint32_t *const SWRCMD = (void *)UHARDDOOM_FEMEM_SWRCMD(0);
 
 static uint32_t cmd_ptr;
+uint32_t aaa = 123;
 
 static noreturn void error(int code, uint32_t data_a, uint32_t data_b) {
 	*FE_ERROR_DATA_A = data_a;
@@ -198,12 +199,12 @@ static void cmd_blit(uint32_t cmd_header) {
 	dst_ptr += dst_y * dst_pitch;
 	dst_ptr += dst_x & ~UHARDDOOM_BLOCK_MASK;
 	dst_x &= UHARDDOOM_BLOCK_MASK;
-	src_ptr += src_y * src_pitch;
-	src_ptr += src_x & ~UHARDDOOM_BLOCK_MASK;
-	src_x &= UHARDDOOM_BLOCK_MASK;
 	/* Decide on the path.  */
-	if (src_w == dst_w && src_h == dst_h && src_x == dst_x) {
+	if (src_w == dst_w && src_h == dst_h && (src_x & UHARDDOOM_BLOCK_MASK) == dst_x && ulog == 0x10 && vlog == 0x10) {
 		/* Simple case, no scaling, no intra-block shift — use SRD.  */
+		src_ptr += src_y * src_pitch;
+		src_ptr += src_x & ~UHARDDOOM_BLOCK_MASK;
+		src_x &= UHARDDOOM_BLOCK_MASK;
 		/* Finish SWR work.  */
 		SWRCMD[UHARDDOOM_SWRCMD_TYPE_SRDLOCK] = 0;
 		SRDCMD[UHARDDOOM_SRDCMD_TYPE_SRDLOCK] = 0;
@@ -223,8 +224,32 @@ static void cmd_blit(uint32_t cmd_header) {
 		}
 	} else {
 		/* Hard case, use SPAN.  */
-		/* XXX */
-		__builtin_trap();
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_SRC_PTR] = src_ptr;
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_SRC_PITCH] = src_pitch;
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_UVMASK] = UHARDDOOM_SPANCMD_DATA_UVMASK(ulog, vlog);
+		uint32_t ustep = (src_w << 16) / dst_w;
+		uint32_t ustart = (src_x << 16) + 0x8000;
+		uint32_t vstep = (src_h << 16) / dst_h;
+		uint32_t vstart = (src_y << 16) + 0x8000;
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_USTEP] = ustep;
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_VSTEP] = 0;
+		/* Finish SWR work.  */
+		SWRCMD[UHARDDOOM_SWRCMD_TYPE_SPANLOCK] = 0;
+		SPANCMD[UHARDDOOM_SPANCMD_TYPE_SPANLOCK] = 0;
+		/* Prepare the skip.  */
+		uint32_t skip_end = -(dst_w + dst_x) & UHARDDOOM_BLOCK_MASK;
+		uint32_t blocks = (dst_w + dst_x + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
+		FXCMD[UHARDDOOM_FXCMD_TYPE_SKIP] = UHARDDOOM_FXCMD_DATA_SKIP(dst_x, skip_end);
+		while (dst_h--) {
+			SPANCMD[UHARDDOOM_SPANCMD_TYPE_USTART] = ustart;
+			SPANCMD[UHARDDOOM_SPANCMD_TYPE_VSTART] = vstart;
+			SPANCMD[UHARDDOOM_SPANCMD_TYPE_DRAW] = UHARDDOOM_SPANCMD_DATA_DRAW(dst_w, dst_x);
+			FXCMD[UHARDDOOM_FXCMD_TYPE_DRAW] = UHARDDOOM_FXCMD_DATA_DRAW(blocks, false, false, false, false, true);
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr;
+			SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(1, blocks, false, false, false);
+			vstart += vstep;
+			dst_ptr += dst_pitch;
+		}
 	}
 }
 

@@ -67,7 +67,6 @@ static void cmd_fill_rect(uint32_t cmd_header) {
 	uint32_t dst_pitch = *CMD_FETCH;
 	if (dst_pitch & UHARDDOOM_BLOCK_MASK)
 		error(UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED, cmd_ptr, dst_pitch);
-	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PITCH] = dst_pitch;
 	uint32_t w3 = *CMD_FETCH;
 	uint32_t x = UHARDDOOM_USER_FILL_RECT_W3_EXTR_X(w3);
 	uint32_t y = UHARDDOOM_USER_FILL_RECT_W3_EXTR_Y(w3);
@@ -88,29 +87,117 @@ static void cmd_fill_rect(uint32_t cmd_header) {
 	}
 }
 
+static void draw_line_horiz_seg(uint32_t dst_ptr, uint32_t xb, uint32_t xe) {
+	uint32_t skip_begin = xb & UHARDDOOM_BLOCK_MASK;
+	uint32_t skip_end = -xe & UHARDDOOM_BLOCK_MASK;
+	uint32_t blocks = (skip_begin + skip_end + xe - xb) >> UHARDDOOM_BLOCK_SHIFT;
+	FXCMD[UHARDDOOM_FXCMD_TYPE_SKIP] = UHARDDOOM_FXCMD_DATA_SKIP(skip_begin, skip_end);
+	FXCMD[UHARDDOOM_FXCMD_TYPE_DRAW] = UHARDDOOM_FXCMD_DATA_DRAW(blocks, false, false, false, false, false);
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr + (xb & ~UHARDDOOM_BLOCK_MASK);
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(1, blocks, false, false, false);
+}
+
+static void draw_line_vert_seg(uint32_t dst_ptr, uint32_t x, uint32_t num) {
+	uint32_t xl = x & UHARDDOOM_BLOCK_MASK;
+	FXCMD[UHARDDOOM_FXCMD_TYPE_SKIP] = UHARDDOOM_FXCMD_DATA_SKIP(xl, UHARDDOOM_BLOCK_MASK - xl);
+	FXCMD[UHARDDOOM_FXCMD_TYPE_DRAW] = UHARDDOOM_FXCMD_DATA_DRAW(1, false, false, false, false, false);
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PTR] = dst_ptr + (x & ~UHARDDOOM_BLOCK_MASK);
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(num, 1, false, false, false);
+}
+
 static void cmd_draw_line(uint32_t cmd_header) {
 	FXCMD[UHARDDOOM_FXCMD_TYPE_FILL_COLOR] = UHARDDOOM_USER_DRAW_LINE_HEADER_EXTR_COLOR(cmd_header);
-	/* XXX */
+	uint32_t dst_ptr = *CMD_FETCH;
+	if (dst_ptr & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED, cmd_ptr, dst_ptr);
+	uint32_t dst_pitch = *CMD_FETCH;
+	if (dst_pitch & UHARDDOOM_BLOCK_MASK)
+		error(UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED, cmd_ptr, dst_pitch);
+	uint32_t w3 = *CMD_FETCH;
+	uint32_t x1 = UHARDDOOM_USER_DRAW_LINE_W3_EXTR_X(w3);
+	uint32_t y1 = UHARDDOOM_USER_DRAW_LINE_W3_EXTR_Y(w3);
+	uint32_t w4 = *CMD_FETCH;
+	uint32_t x2 = UHARDDOOM_USER_DRAW_LINE_W4_EXTR_X(w4);
+	uint32_t y2 = UHARDDOOM_USER_DRAW_LINE_W4_EXTR_Y(w4);
+	/* Make sure x1/y1 is the leftmost endpoint.  */
+	if (x1 > x2) {
+		uint32_t tmp = x1;
+		x1 = x2;
+		x2 = tmp;
+		tmp = y1;
+		y1 = y2;
+		y2 = tmp;
+	}
+	uint32_t dx = x2 - x1;
+	/* Move dst_ptr vertically to the starting line.  */
+	dst_ptr += dst_pitch * y1;
+	uint32_t dy;
+	if (y2 > y1) {
+		/* Drawing line downwards.  */
+		dy = y2 - y1;
+	} else {
+		/* Drawing line upwards.  Adjust the pitch.  */
+		dy = y1 - y2;
+		dst_pitch = -dst_pitch;
+	}
+	if (dx > dy) {
+		/* Mostly-horizontal line.  */
+		int32_t delta = 2 * (int32_t)dy - (int32_t)dx;
+		uint32_t xlast = x1;
+		for (uint32_t x = x1; x <= x2; x++) {
+			if (delta > 0) {
+				draw_line_horiz_seg(dst_ptr, xlast, x);
+				dst_ptr += dst_pitch;
+				xlast = x;
+				delta -= 2 * dx;
+			}
+			delta += 2 * dy;
+		}
+		draw_line_horiz_seg(dst_ptr, xlast, x2 + 1);
+	} else {
+		/* Mostly-vertical line.  */
+		SWRCMD[UHARDDOOM_SWRCMD_TYPE_DST_PITCH] = dst_pitch;
+		int32_t delta = 2 * (int32_t)dx - (int32_t)dy;
+		uint32_t num = 0;
+		uint32_t n = dy + 1;
+		while (n--) {
+			num++;
+			if (delta > 0) {
+				draw_line_vert_seg(dst_ptr, x1, num);
+				dst_ptr += dst_pitch * num;
+				num = 0;
+				x1++;
+				delta -= 2 * dy;
+			}
+			delta += 2 * dx;
+		}
+		draw_line_vert_seg(dst_ptr, x1, num);
+	}
 }
 
 static void cmd_blit(uint32_t cmd_header) {
 	/* XXX */
+	__builtin_trap();
 }
 
 static void cmd_wipe(uint32_t cmd_header) {
 	/* XXX */
+	__builtin_trap();
 }
 
 static void cmd_draw_columns(uint32_t cmd_header) {
 	/* XXX */
+	__builtin_trap();
 }
 
 static void cmd_draw_fuzz(uint32_t cmd_header) {
 	/* XXX */
+	__builtin_trap();
 }
 
 static void cmd_draw_spans(uint32_t cmd_header) {
 	/* XXX */
+	__builtin_trap();
 }
 
 noreturn void main() {

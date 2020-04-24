@@ -560,15 +560,29 @@
 /* Draw line.  */
 #define UHARDDOOM_USER_DRAW_LINE_HEADER(color)		(UHARDDOOM_USER_CMD_TYPE_DRAW_LINE | (color) << 8)
 #define UHARDDOOM_USER_DRAW_LINE_HEADER_EXTR_COLOR(w)	((w) >> 8 & 0xff)
-/* XXX */
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: X and Y coords of one line endpoint.  */
+#define UHARDDOOM_USER_DRAW_LINE_W3(x, y)		((x) | (y) << 16)
+#define UHARDDOOM_USER_DRAW_LINE_W3_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_LINE_W3_EXTR_Y(w)		((w) >> 16 & 0xffff)
+/* Word 4: X and Y coords of the other line endpoint.  */
+#define UHARDDOOM_USER_DRAW_LINE_W4(x, y)		((x) | (y) << 16)
+#define UHARDDOOM_USER_DRAW_LINE_W4_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_LINE_W4_EXTR_Y(w)		((w) >> 16 & 0xffff)
+
 /* Blit.  */
 /* XXX */
+
 /* Wipe.  */
 /* XXX */
+
 /* Draw columns.  */
 /* XXX */
+
 /* Draw fuzz.  */
 /* XXX */
+
 /* Draw spans.  */
 /* XXX */
 

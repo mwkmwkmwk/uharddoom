@@ -1,6 +1,6 @@
 all: udoomfw.elf udoomfw.bin
 
-udoomfw.elf: udoomfw.c udoomfw.lds
+udoomfw.elf: udoomfw.c udoomfw.lds uharddoom.h
 	riscv64-linux-gnu-gcc -O3 -ffreestanding -nostdlib udoomfw.c -o udoomfw.elf -march=rv32im -mabi=ilp32 -Wl,-T,udoomfw.lds,--build-id=none
 
 udoomfw.bin: udoomfw.elf

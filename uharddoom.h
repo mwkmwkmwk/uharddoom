@@ -599,30 +599,30 @@
 /* Section 6: FE core internal memory map.  */
 
 /* Aliases of the FE_ERROR_DATA_* registers.  */
-#define UHARDDOOM_FEMEM_FE_ERROR_DATA_A			0x00000100
-#define UHARDDOOM_FEMEM_FE_ERROR_DATA_B			0x00000104
+#define UHARDDOOM_FEMEM_FE_ERROR_DATA_A			0x00000040
+#define UHARDDOOM_FEMEM_FE_ERROR_DATA_B			0x00000044
 /* When written, triggers FE_ERROR and halts the core.  */
-#define UHARDDOOM_FEMEM_FE_ERROR_CODE			0x00000108
+#define UHARDDOOM_FEMEM_FE_ERROR_CODE			0x00000048
 /* Read to wait until a job is active.  */
-#define UHARDDOOM_FEMEM_JOB_WAIT			0x00000200
+#define UHARDDOOM_FEMEM_JOB_WAIT			0x00000080
 /* Write to signal job done.  */
-#define UHARDDOOM_FEMEM_JOB_DONE			0x00000204
+#define UHARDDOOM_FEMEM_JOB_DONE			0x00000084
 /* Read only alias of CMD_FE_PTR.  */
-#define UHARDDOOM_FEMEM_CMD_PTR				0x00000300
+#define UHARDDOOM_FEMEM_CMD_PTR				0x000000c0
 /* If 1, means no more commands in the job.  */
-#define UHARDDOOM_FEMEM_CMD_END				0x00000304
+#define UHARDDOOM_FEMEM_CMD_END				0x000000c4
 /* Read to get the next command word.  */
-#define UHARDDOOM_FEMEM_CMD_FETCH			0x00000308
+#define UHARDDOOM_FEMEM_CMD_FETCH			0x000000c8
 /* Write to submit a command to a FIFO.  */
-#define UHARDDOOM_FEMEM_SRDCMD(t)			(0x00000400 + (t) * 4)
-#define UHARDDOOM_FEMEM_SPANCMD(t)			(0x00000500 + (t) * 4)
-#define UHARDDOOM_FEMEM_COLCMD(t)			(0x00000600 + (t) * 4)
-#define UHARDDOOM_FEMEM_FXCMD(t)			(0x00000700 + (t) * 4)
-#define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000800 + (t) * 4)
+#define UHARDDOOM_FEMEM_SRDCMD(t)			(0x00000100 + (t) * 4)
+#define UHARDDOOM_FEMEM_SPANCMD(t)			(0x00000140 + (t) * 4)
+#define UHARDDOOM_FEMEM_COLCMD(t)			(0x00000180 + (t) * 4)
+#define UHARDDOOM_FEMEM_FXCMD(t)			(0x000001c0 + (t) * 4)
+#define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000200 + (t) * 4)
 /* Read to wait for a signal from SWR on the FELOCK interface.  */
-#define UHARDDOOM_FEMEM_FELOCK				0x00000900
+#define UHARDDOOM_FEMEM_FELOCK				0x00000240
 /* Write to bump a STATS counter.  */
-#define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000c00 + (t) * 4)
+#define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000300 + (t) * 4)
 /* The code RAM — read only from the core.  */
 #define UHARDDOOM_FEMEM_CODE_BASE			0x80000000
 #define UHARDDOOM_FEMEM_CODE_SIZE			0x10000

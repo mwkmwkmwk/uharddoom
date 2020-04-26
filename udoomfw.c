@@ -411,8 +411,8 @@ static void cmd_blit(uint32_t cmd_header) {
 
 #define HEAP_MAX 0x400
 
-uint32_t heap[HEAP_MAX];
-uint32_t heap_size;
+static uint32_t heap[HEAP_MAX];
+static uint32_t heap_size;
 
 static inline uint32_t heap_left() {
 	return HEAP_MAX - heap_size;
@@ -760,8 +760,66 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 }
 
 static void cmd_draw_spans(uint32_t cmd_header) {
-	/* XXX */
-	__builtin_trap();
+	bool cmap_en = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_CMAP_EN(cmd_header);
+	bool trans_en = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_TRANS_EN(cmd_header);
+	uint32_t ulog = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_ULOG(cmd_header);
+	uint32_t vlog = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_VLOG(cmd_header);
+	spancmd_uvmask(ulog, vlog);
+	uint32_t dst_ptr = *CMD_FETCH;
+	uint32_t dst_pitch = *CMD_FETCH;
+	uint32_t w3 = *CMD_FETCH;
+	uint32_t y0 = UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y0(w3);
+	uint32_t y1 = UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y1(w3);
+	spancmd_src_ptr(*CMD_FETCH);
+	spancmd_src_pitch(*CMD_FETCH);
+	if (trans_en)
+		swrcmd_transmap_ptr(*CMD_FETCH);
+	dst_ptr += y0 * dst_pitch;
+	uint32_t num;
+	if (y1 > y0) {
+		num = y1 - y0 + 1;
+	} else {
+		num = y0 - y1 + 1;
+		dst_pitch = -dst_pitch;
+	}
+	swrcmd_dst_pitch(UHARDDOOM_BLOCK_SIZE);
+	if (cmap_en)
+		srdcmd_src_pitch(UHARDDOOM_BLOCK_SIZE);
+	/* 1 is unaligned and thus invalid.  */
+	uint32_t last_cmap_ptr = 1;
+	while (num--) {
+		uint32_t wr0 = *CMD_FETCH;
+		uint32_t x0 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X0(wr0);
+		uint32_t x1 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X1(wr0);
+		if (x1 < x0)
+			error(UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV, cmd_ptr, wr0);
+		spancmd_ustart(*CMD_FETCH);
+		spancmd_ustep(*CMD_FETCH);
+		spancmd_vstart(*CMD_FETCH);
+		spancmd_vstep(*CMD_FETCH);
+		if (cmap_en) {
+			uint32_t cmap_ptr = *CMD_FETCH;
+			if (cmap_ptr != last_cmap_ptr) {
+				if (cmap_ptr & UHARDDOOM_BLOCK_MASK)
+					error(UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED, cmd_ptr, cmap_ptr);
+				srdcmd_src_ptr(cmap_ptr);
+				srdcmd_read_fx(4);
+				fxcmd_load_cmap();
+				last_cmap_ptr = cmap_ptr;
+			}
+		}
+		uint32_t off = x0 & ~UHARDDOOM_BLOCK_MASK;
+		x0 -= off;
+		x1 -= off;
+		uint32_t skip_end = ~x1 & UHARDDOOM_BLOCK_MASK;
+		uint32_t blocks = (x1 + 1 + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
+		spancmd_draw(x1 - x0 + 1, x0);
+		fxcmd_skip(x0, skip_end, false);
+		fxcmd_draw_span(blocks, cmap_en);
+		swrcmd_dst_ptr(dst_ptr + off);
+		swrcmd_draw_fx(blocks, false);
+		dst_ptr += dst_pitch;
+	}
 }
 
 noreturn void main() {

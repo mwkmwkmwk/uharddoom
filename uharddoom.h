@@ -274,6 +274,8 @@
 #define UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED		0x00000003
 /* Y coordinates for DRAW_COLUMNS in wrong order.  Data A is cmd pointer, data B is command word.  */
 #define UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV		0x00000004
+/* X coordinates for DRAW_SPANS in wrong order.  Data A is cmd pointer, data B is command word.  */
+#define UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV		0x00000005
 /* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
@@ -664,7 +666,7 @@
 /* Draw spans.  */
 /* Word 0: command type, enables, UV mask.  */
 #define UHARDDOOM_USER_DRAW_SPANS_HEADER(ce, te, ulog, vlog)	(UHARDDOOM_USER_CMD_TYPE_DRAW_SPANS | (ce) << 8 | (te) << 12 | (ulog) << 16 | (vlog) << 24)
-#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_CMAP_A_EN(w)	((w) >> 8 & 1)
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_CMAP_EN(w)	((w) >> 8 & 1)
 #define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_TRANS_EN(w)	((w) >> 12 & 1)
 #define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_ULOG(w)	((w) >> 16 & 0x1f)
 #define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_VLOG(w)	((w) >> 24 & 0x1f)
@@ -674,8 +676,9 @@
 #define UHARDDOOM_USER_DRAW_SPANS_W3(y0, y1)		((y0) | (y1) << 16)
 #define UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y0(w)		((w) & 0xffff)
 #define UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y1(w)		((w) >> 16 & 0xffff)
-/* Word 4: texture pointer.  */
-/* Word 5 (if enabled in header): transmap address.  */
+/* Word 4: source pointer.  */
+/* Word 5: source pitch.  */
+/* Word 6 (if enabled in header): transmap address.  */
 /* The following 4 or 5 words are repeated once for every x coordinate.  */
 /* Repeat word 0: x0 and x1.  */
 #define UHARDDOOM_USER_DRAW_SPANS_WR0(x0, x1)		((x0) | (x1) << 16)

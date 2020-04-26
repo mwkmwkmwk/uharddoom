@@ -270,6 +270,10 @@
 #define UHARDDOOM_FE_ERROR_CODE_DST_PTR_UNALIGNED	0x00000001
 /* Unaligned dst pitch.  Data A is cmd pointer, data B is dst pitch.  */
 #define UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED	0x00000002
+/* Unaligned colormap pointer.  Data A is cmd pointer, data B is colormap pointer.  */
+#define UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED		0x00000003
+/* Y coordinates for DRAW_COLUMNS in wrong order.  Data A is cmd pointer, data B is command word.  */
+#define UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV		0x00000004
 /* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
@@ -388,31 +392,24 @@
  * possibly runs them through the TRANSMAP, writes them to memory.  */
 
 #define UHARDDOOM_SWR_STATE				0x0b00
-#define UHARDDOOM_SWR_STATE_DRAW_LENGTH_MASK		0x000007ff
-#define UHARDDOOM_SWR_STATE_VERT_EN			0x00001000
-#define UHARDDOOM_SWR_STATE_COL_EN			0x00002000
-#define UHARDDOOM_SWR_STATE_TRANS_EN			0x00004000
-#define UHARDDOOM_SWR_STATE_TRANS_POS_MASK		0x007f0000
-#define UHARDDOOM_SWR_STATE_TRANS_POS_SHIFT		16
-#define UHARDDOOM_SWR_STATE_SRC_BUF_FULL		0x01000000
-#define UHARDDOOM_SWR_STATE_DST_BUF_FULL		0x02000000
+#define UHARDDOOM_SWR_STATE_DRAW_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_SWR_STATE_COL_EN			0x00010000
+#define UHARDDOOM_SWR_STATE_TRANS_EN			0x00020000
+#define UHARDDOOM_SWR_STATE_SRC_BUF_FULL		0x00040000
+#define UHARDDOOM_SWR_STATE_DST_BUF_FULL		0x00080000
+#define UHARDDOOM_SWR_STATE_TRANS_POS_MASK		0x07f00000
+#define UHARDDOOM_SWR_STATE_TRANS_POS_SHIFT		20
 /* If 1, pending FELOCK, SRDLOCK, COLLOCK, SPANLOCK.  */
 #define UHARDDOOM_SWR_STATE_FELOCK			0x10000000
 #define UHARDDOOM_SWR_STATE_SRDLOCK			0x20000000
 #define UHARDDOOM_SWR_STATE_COLLOCK			0x40000000
 #define UHARDDOOM_SWR_STATE_SPANLOCK			0x80000000
-#define UHARDDOOM_SWR_STATE_MASK			0xf37f77ff
+#define UHARDDOOM_SWR_STATE_MASK			0xf7fff7ff
 #define UHARDDOOM_SWR_TRANSMAP_PTR			0x0b04
 #define UHARDDOOM_SWR_DST_PTR				0x0b08
 #define UHARDDOOM_SWR_DST_PTR_MASK			0xffffffc0
 #define UHARDDOOM_SWR_DST_PITCH				0x0b0c
 #define UHARDDOOM_SWR_DST_PITCH_MASK			0xffffffc0
-#define UHARDDOOM_SWR_VERT_PTR				0x0b10
-#define UHARDDOOM_SWR_VERT_STATE			0x0b14
-#define UHARDDOOM_SWR_VERT_STATE_HEIGHT_MASK		0x0000ffff
-#define UHARDDOOM_SWR_VERT_STATE_POS_MASK		0xffff0000
-#define UHARDDOOM_SWR_VERT_STATE_POS_SHIFT		16
-#define UHARDDOOM_SWR_VERT_STATE_MASK			0xffffffff
 /* 64-bit */
 #define UHARDDOOM_SWR_BLOCK_MASK			0x0b18
 /* The three buffers: source data, orignal destination data, post-TRANSMAP
@@ -427,25 +424,25 @@
 
 #define UHARDDOOM_FX_STATE				0x0c00
 #define UHARDDOOM_FX_STATE_DRAW_LENGTH_MASK		0x0000ffff
-#define UHARDDOOM_FX_STATE_DRAW_SKIP_ALWAYS		0x00010000
-#define UHARDDOOM_FX_STATE_DRAW_SKIP_NON_FIRST		0x00020000
-#define UHARDDOOM_FX_STATE_DRAW_CMAP_EN			0x00100000
-#define UHARDDOOM_FX_STATE_DRAW_FUZZ_EN			0x00200000
-#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_MASK		0x00c00000
-#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_SHIFT		22
-#define UHARDDOOM_FX_STATE_DRAW_FETCH_SRD		0x01000000
-#define UHARDDOOM_FX_STATE_DRAW_FETCH_SPAN		0x02000000
-#define UHARDDOOM_FX_STATE_DRAW_FETCH_DONE		0x04000000
+#define UHARDDOOM_FX_STATE_DRAW_CMAP_EN			0x00010000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_EN			0x00020000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_MASK		0x000c0000
+#define UHARDDOOM_FX_STATE_DRAW_FUZZ_POS_SHIFT		18
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_SRD		0x00100000
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_SPAN		0x00200000
+#define UHARDDOOM_FX_STATE_DRAW_FETCH_DONE		0x00400000
+#define UHARDDOOM_FX_STATE_DRAW_SKIP_NON_FIRST		0x00800000
 #define UHARDDOOM_FX_STATE_LOAD_CMAP			0x10000000
-#define UHARDDOOM_FX_STATE_LOAD_FUZZ			0x20000000
+#define UHARDDOOM_FX_STATE_INIT_FUZZ			0x20000000
 #define UHARDDOOM_FX_STATE_LOAD_CNT_MASK		0xc0000000
 #define UHARDDOOM_FX_STATE_LOAD_CNT_SHIFT		30
-#define UHARDDOOM_FX_STATE_MASK				0xf7f3ffff
+#define UHARDDOOM_FX_STATE_MASK				0xf0ffffff
 #define UHARDDOOM_FX_SKIP				0x0c04
 #define UHARDDOOM_FX_SKIP_BEGIN_MASK			0x0000003f
 #define UHARDDOOM_FX_SKIP_END_MASK			0x00003f00
 #define UHARDDOOM_FX_SKIP_END_SHIFT			8
-#define UHARDDOOM_FX_SKIP_MASK				0x00003f3f
+#define UHARDDOOM_FX_SKIP_ALWAYS			0x00010000
+#define UHARDDOOM_FX_SKIP_MASK				0x00013f3f
 #define UHARDDOOM_FX_COL(i)				(0xd00 + (i) * 4)
 #define UHARDDOOM_FX_COL_FUZZPOS_MASK			0x0000003f
 #define UHARDDOOM_FX_COL_ENABLE				0x00000080
@@ -615,16 +612,80 @@
 /* Word 6: source A pitch.  */
 /* Word 7: source B pointer.  */
 /* Word 8: source B pitch.  */
-/* Word 9 + i, i in range(dst_height): Y offset of a given column */
+/* The following word is repeated once for every X coordinate.  */
+/* Repeat word 0: Y offset of a given column */
 
 /* Draw columns.  */
-/* XXX */
+/* Word 0: command type, enables, number of columns.  */
+#define UHARDDOOM_USER_DRAW_COLUMNS_HEADER(cae, cbe, te, nc)	(UHARDDOOM_USER_CMD_TYPE_DRAW_COLUMNS | (cae) << 8 | (cbe) << 9 | (te) << 12, (nc) << 16)
+#define UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_CMAP_A_EN(w)	((w) >> 8 & 1)
+#define UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_CMAP_B_EN(w)	((w) >> 9 & 1)
+#define UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_TRANS_EN(w)	((w) >> 12 & 1)
+#define UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_NUM_COLS(w)	((w) >> 16 & 0xffff)
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3 (if enabled in header): colormap A address.  */
+/* Word 4 (if enabled in header): transmap address.  */
+/* The following 5 or 6 words are repeated once for every column.  */
+/* Repeat word 0: x, U mask.  */
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR0(x, ulog)	((x) | (ulog) << 16)
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(w)	((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_ULOG(w)	((w) >> 16 & 0x1f)
+/* Repeat word 1: y0 and y1.  */
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR1(y0, y1)		((y0) | (y1) << 16)
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR1_EXTR_Y0(w)	((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_COLUMNS_WR1_EXTR_Y1(w)	((w) >> 16 & 0xffff)
+/* Repeat word 2: texture pointer.  */
+/* Repeat word 3: ustart.  */
+/* Repeat word 4: ustep.  */
+/* Repeat word 5 (if enabled in header): colormap B address.  */
 
 /* Draw fuzz.  */
-/* XXX */
+/* Word 0: command type, number of columns.  */
+#define UHARDDOOM_USER_DRAW_FUZZ_HEADER(nc)		(UHARDDOOM_USER_CMD_TYPE_DRAW_FUZZ | (nc) << 16)
+#define UHARDDOOM_USER_DRAW_FUZZ_HEADER_EXTR_NUM_COLS(w)	((w) >> 16 & 0xffff)
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: fuzzstart and fuzzend.  */
+#define UHARDDOOM_USER_DRAW_FUZZ_W3(fs, fe)		((fs) | (fe) << 16)
+#define UHARDDOOM_USER_DRAW_FUZZ_W3_EXTR_FUZZSTART(w)	((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_FUZZ_W3_EXTR_FUZZEND(w)	((w) >> 16 & 0xffff)
+/* Word 4: colormap address.  */
+/* The following 2 words are repeated once for every column.  */
+/* Repeat word 0: x, U mask.  */
+#define UHARDDOOM_USER_DRAW_FUZZ_WR0(x, fuzzpos)	((x) | (fuzzpos) << 16)
+#define UHARDDOOM_USER_DRAW_FUZZ_WR0_EXTR_X(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_FUZZ_WR0_EXTR_FUZZPOS(w)	((w) >> 16 & 0x3f)
+/* Repeat word 1: y0 and y1.  */
+#define UHARDDOOM_USER_DRAW_FUZZ_WR1(y0, y1)		((y0) | (y1) << 16)
+#define UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y0(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y1(w)		((w) >> 16 & 0xffff)
 
 /* Draw spans.  */
-/* XXX */
+/* Word 0: command type, enables, UV mask.  */
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER(ce, te, ulog, vlog)	(UHARDDOOM_USER_CMD_TYPE_DRAW_SPANS | (ce) << 8 | (te) << 12 | (ulog) << 16 | (vlog) << 24)
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_CMAP_A_EN(w)	((w) >> 8 & 1)
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_TRANS_EN(w)	((w) >> 12 & 1)
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_ULOG(w)	((w) >> 16 & 0x1f)
+#define UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_VLOG(w)	((w) >> 24 & 0x1f)
+/* Word 1: destination pointer.  */
+/* Word 2: destination pitch.  */
+/* Word 3: y0 and y1.  */
+#define UHARDDOOM_USER_DRAW_SPANS_W3(y0, y1)		((y0) | (y1) << 16)
+#define UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y0(w)		((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_SPANS_W3_EXTR_Y1(w)		((w) >> 16 & 0xffff)
+/* Word 4: texture pointer.  */
+/* Word 5 (if enabled in header): transmap address.  */
+/* The following 4 or 5 words are repeated once for every x coordinate.  */
+/* Repeat word 0: x0 and x1.  */
+#define UHARDDOOM_USER_DRAW_SPANS_WR0(x0, x1)		((x0) | (x1) << 16)
+#define UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X0(w)	((w) & 0xffff)
+#define UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X1(w)	((w) >> 16 & 0xffff)
+/* Repeat word 1: ustart.  */
+/* Repeat word 2: ustep.  */
+/* Repeat word 3: vstart.  */
+/* Repeat word 4: vstep.  */
+/* Repeat word 5 (if enabled in header): colormap address.  */
 
 
 /* Section 5: Misc definitions.  */
@@ -764,33 +825,34 @@
 /* Loads 4 blocks from FXIN as the colormap.  */
 #define UHARDDOOM_FXCMD_TYPE_LOAD_CMAP			0x2
 /* Loads 2 blocks from FXIN to the buffer.  */
-#define UHARDDOOM_FXCMD_TYPE_LOAD_FUZZ			0x3
+#define UHARDDOOM_FXCMD_TYPE_INIT_FUZZ			0x3
 /* Sets FUZZ state for a column.  */
 #define UHARDDOOM_FXCMD_TYPE_COL_SETUP			0x4
 /* Sets how many columns should be masked off at start/end.  */
 #define UHARDDOOM_FXCMD_TYPE_SKIP			0x5
 /* Draws stuff.  */
 #define UHARDDOOM_FXCMD_TYPE_DRAW			0x6
-#define UHARDDOOM_FXCMD_DATA_COL_SETUP(pos, en)		((pos) | (en) << 7)
-#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_FUZZPOS(cmd)	((cmd) & 0x3f)
-#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_ENABLE(cmd)	((cmd) >> 7 & 1)
-#define UHARDDOOM_FXCMD_DATA_SKIP(b, e)			((b) | (e) << 8)
+#define UHARDDOOM_FXCMD_DATA_COL_SETUP(x, pos, en)		((x) | (pos) << 8 | (en) << 15)
+#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
+#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_FUZZPOS(cmd)	((cmd) >> 8 & 0x3f)
+#define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_ENABLE(cmd)	((cmd) >> 15 & 1)
+#define UHARDDOOM_FXCMD_DATA_SKIP(b, e, a)		((b) | (e) << 8 | (a) << 16)
 #define UHARDDOOM_FXCMD_DATA_EXTR_SKIP_BEGIN(cmd)	((cmd) & 0x3f)
 #define UHARDDOOM_FXCMD_DATA_EXTR_SKIP_END(cmd)		((cmd) >> 8 & 0x3f)
-#define UHARDDOOM_FXCMD_DATA_DRAW(len, sa, ce, fe, srd, span)	((len) | (sa) << 16 | (ce) << 20 | (fe) << 21 | (srd) << 24 | (span) << 25)
-/* Number of blocks to be drawn.  */
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
 /* If true, SKIP will be applied to all blocks; otherwise, BEGIN will
  * only be applied to the first block, and END only to the last block.  */
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_SKIP_ALWAYS	((cmd) >> 16 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_SKIP_ALWAYS(cmd)	((cmd) >> 16 & 1)
+#define UHARDDOOM_FXCMD_DATA_DRAW(len, ce, fe, srd, span)	((len) | (ce) << 16 | (fe) << 17 | (srd) << 20 | (span) << 21)
+/* Number of blocks to be drawn.  */
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
 /* If true, the pixels sent to SWR will be translated through the colormap.  */
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_CMAP_EN		((cmd) >> 20 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_CMAP_EN		((cmd) >> 16 & 1)
 /* Extra-special DRAW_FUZZ mode.  */
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FUZZ_EN		((cmd) >> 21 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FUZZ_EN		((cmd) >> 17 & 1)
 /* Selects the data source.  If neither is set, just draw whatever is in
  * the buffer.  */
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SRD	((cmd) >> 24 & 1)
-#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SPAN	((cmd) >> 25 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SRD	((cmd) >> 20 & 1)
+#define UHARDDOOM_FXCMD_DATA_EXTR_DRAW_FETCH_SPAN	((cmd) >> 21 & 1)
 
 /* Section 7.5: SWRCMD — SWR unit internal commands.  */
 
@@ -811,15 +873,11 @@
 #define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x7
 /* Send a signal on SPANLOCK.  */
 #define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x8
-#define UHARDDOOM_SWRCMD_DATA_DRAW(height, len, v_en, c_en, t_en)	((height) | (len) << 16| (v_en) << 28 | (c_en) << 29 | (t_en) << 30)
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_HEIGHT(cmd)	((cmd) & 0xffff)
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) >> 16 & 0x7ff)
-/* If set, fetch a new block for every vertical step.  Otherwise, only fetch
- * for horizontal steps.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_VERT_EN(cmd)	((cmd) >> 28 & 1)
+#define UHARDDOOM_SWRCMD_DATA_DRAW(len, c_en, t_en)	((len) | (c_en) << 16 | (t_en) << 17)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
 /* If set, draw from COL, otherwise from FX.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 29 & 1)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_COL_EN(cmd)	((cmd) >> 16 & 1)
 /* If set, enable the TRANSMAP.  */
-#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_TRANS_EN(cmd)	((cmd) >> 30 & 1)
+#define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_TRANS_EN(cmd)	((cmd) >> 17 & 1)
 
 #endif

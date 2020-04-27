@@ -15,7 +15,6 @@
  * — disable the source and/or destination unit instead.  */
 #define UHARDDOOM_ENABLE				0x0000
 #define UHARDDOOM_ENABLE_BATCH				0x00000001
-#define UHARDDOOM_ENABLE_JOB				0x00000002
 #define UHARDDOOM_ENABLE_CMD				0x00000004
 #define UHARDDOOM_ENABLE_FE				0x00000008
 #define UHARDDOOM_ENABLE_SRD				0x00000010
@@ -23,7 +22,7 @@
 #define UHARDDOOM_ENABLE_COL				0x00000040
 #define UHARDDOOM_ENABLE_FX				0x00000080
 #define UHARDDOOM_ENABLE_SWR				0x00000100
-#define UHARDDOOM_ENABLE_ALL				0x000001ff
+#define UHARDDOOM_ENABLE_ALL				0x000001fd
 /* Status of device units — 1 means they have work to do.  */
 #define UHARDDOOM_STATUS				0x0004
 #define UHARDDOOM_STATUS_BATCH				0x00000001
@@ -42,17 +41,16 @@
 #define UHARDDOOM_STATUS_FIFO_SWRCMD			0x00100000
 #define UHARDDOOM_STATUS_FIFO_COLIN			0x00200000
 #define UHARDDOOM_STATUS_FIFO_FXIN			0x00400000
-#define UHARDDOOM_STATUS_FIFO_FELOCK			0x01000000
-#define UHARDDOOM_STATUS_FIFO_SRDLOCK			0x02000000
-#define UHARDDOOM_STATUS_FIFO_COLLOCK			0x04000000
-#define UHARDDOOM_STATUS_FIFO_SPANLOCK			0x08000000
+#define UHARDDOOM_STATUS_FIFO_FESEM			0x01000000
+#define UHARDDOOM_STATUS_FIFO_SRDSEM			0x02000000
+#define UHARDDOOM_STATUS_FIFO_COLSEM			0x04000000
+#define UHARDDOOM_STATUS_FIFO_SPANSEM			0x08000000
 #define UHARDDOOM_STATUS_FIFO_SPANOUT			0x10000000
 #define UHARDDOOM_STATUS_FIFO_COLOUT			0x20000000
 #define UHARDDOOM_STATUS_FIFO_FXOUT			0x40000000
 /* The reset register.  Punching 1 will clear all pending work and/or
  * cached data.  */
 #define UHARDDOOM_RESET					0x0004
-#define UHARDDOOM_RESET_BATCH				0x00000001
 #define UHARDDOOM_RESET_JOB				0x00000002
 #define UHARDDOOM_RESET_CMD				0x00000004
 #define UHARDDOOM_RESET_FE				0x00000008
@@ -75,14 +73,14 @@
 #define UHARDDOOM_RESET_FIFO_SWRCMD			0x00100000
 #define UHARDDOOM_RESET_FIFO_COLIN			0x00200000
 #define UHARDDOOM_RESET_FIFO_FXIN			0x00400000
-#define UHARDDOOM_RESET_FIFO_FELOCK			0x01000000
-#define UHARDDOOM_RESET_FIFO_SRDLOCK			0x02000000
-#define UHARDDOOM_RESET_FIFO_COLLOCK			0x04000000
-#define UHARDDOOM_RESET_FIFO_SPANLOCK			0x08000000
+#define UHARDDOOM_RESET_FIFO_FESEM			0x01000000
+#define UHARDDOOM_RESET_FIFO_SRDSEM			0x02000000
+#define UHARDDOOM_RESET_FIFO_COLSEM			0x04000000
+#define UHARDDOOM_RESET_FIFO_SPANSEM			0x08000000
 #define UHARDDOOM_RESET_FIFO_SPANOUT			0x10000000
 #define UHARDDOOM_RESET_FIFO_COLOUT			0x20000000
 #define UHARDDOOM_RESET_FIFO_FXOUT			0x40000000
-#define UHARDDOOM_RESET_ALL				0x7fffffff
+#define UHARDDOOM_RESET_ALL				0x7ffffffe
 /* Interrupt status.  */
 #define UHARDDOOM_INTR					0x0008
 #define UHARDDOOM_INTR_BATCH_WAIT			0x00000001
@@ -145,6 +143,7 @@
  * the BATCH_WAIT interrupt will be triggered.  */
 #define UHARDDOOM_BATCH_WAIT				0x0030
 #define UHARDDOOM_BATCH_PTR_MASK			0xfffffff0
+#define UHARDDOOM_BATCH_JOB_SIZE			0x10
 
 /* Section 2.3: JOB — the main job controller.  Collects a single job, sends
  * the PD to TLB, pokes CMD and FE, waits until the whole job is finished,
@@ -249,13 +248,15 @@
 #define UHARDDOOM_FE_STATE_STATE_COLCMD			0x00000006
 #define UHARDDOOM_FE_STATE_STATE_FXCMD			0x00000007
 #define UHARDDOOM_FE_STATE_STATE_SWRCMD			0x00000008
-/* The core is blocked on FELOCK read.  */
-#define UHARDDOOM_FE_STATE_STATE_FELOCK			0x00000009
+/* The core is blocked on FESEM read.  */
+#define UHARDDOOM_FE_STATE_STATE_FESEM			0x00000009
 #define UHARDDOOM_FE_STATE_STATE_MASK			0x0000000f
 /* The pending command code, when core is blocked on a FIFO write.  */
 #define UHARDDOOM_FE_STATE_CMD_MASK			0x000000f0
+#define UHARDDOOM_FE_STATE_CMD_SHIFT			4
 /* The destination register, when core is blocked on a register read.  */
 #define UHARDDOOM_FE_STATE_DST_MASK			0x00001f00
+#define UHARDDOOM_FE_STATE_DST_SHIFT			8
 #define UHARDDOOM_FE_STATE_MASK				0x00001fff
 /* The pending write data, when core is blocked on a FIFO write.  */
 #define UHARDDOOM_FE_WRITE_DATA				0x0118
@@ -276,19 +277,20 @@
 #define UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV		0x00000004
 /* X coordinates for DRAW_SPANS in wrong order.  Data A is cmd pointer, data B is command word.  */
 #define UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV		0x00000005
-/* XXX add more error codes here */
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
 #define UHARDDOOM_FE_ERROR_CODE_ILLEGAL_INSTRUCTION	0x00000080
+/* The FE core tried to jump to an unaligned address.  A is current PC, B is would-be new PC.  */
+#define UHARDDOOM_FE_ERROR_CODE_UNALIGNED_INSTRUCTION	0x00000081
+/* The FE core encountered a load bus error.  A is the faulting
+ * address.  */
+#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_LOAD		0x00000082
+/* The FE core encountered a store bus error.  A is the faulting
+ * address, B is the written data.  */
+#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_STORE		0x00000083
 /* The FE core encountered an instruction fetch bus error.  A is the
  * faulting address.  */
-#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_EXEC		0x00000081
-/* The FE core encountered a read bus error.  A is the faulting
- * address.  */
-#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_READ		0x00000082
-/* The FE core encountered a write bus error.  A is the faulting
- * address, B is the written data.  */
-#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_WRITE		0x00000083
+#define UHARDDOOM_FE_ERROR_CODE_BUS_ERROR_EXEC		0x00000084
 #define UHARDDOOM_FE_ERROR_CODE_MASK			0x000000ff
 /* The registers.  */
 #define UHARDDOOM_FE_REG(i)				(0x0180 + (i) * 4)
@@ -296,7 +298,60 @@
 
 /* Section 2.6: FIFOs.  */
 
-/* XXX: destined for 0x200:0x400 */
+#define UHARDDOOM_FIFO_SRDCMD_GET			0x0200
+#define UHARDDOOM_FIFO_SRDCMD_PUT			0x0204
+#define UHARDDOOM_FIFO_SRDCMD_CMD_WINDOW		0x0208
+#define UHARDDOOM_FIFO_SRDCMD_DATA_WINDOW		0x020c
+#define UHARDDOOM_FIFO_SRDCMD_SIZE			0x40
+#define UHARDDOOM_FIFO_SPANCMD_GET			0x0210
+#define UHARDDOOM_FIFO_SPANCMD_PUT			0x0214
+#define UHARDDOOM_FIFO_SPANCMD_CMD_WINDOW		0x0218
+#define UHARDDOOM_FIFO_SPANCMD_DATA_WINDOW		0x021c
+#define UHARDDOOM_FIFO_SPANCMD_SIZE			0x40
+#define UHARDDOOM_FIFO_COLCMD_GET			0x0220
+#define UHARDDOOM_FIFO_COLCMD_PUT			0x0224
+#define UHARDDOOM_FIFO_COLCMD_CMD_WINDOW		0x0228
+#define UHARDDOOM_FIFO_COLCMD_DATA_WINDOW		0x022c
+#define UHARDDOOM_FIFO_COLCMD_SIZE			0x40
+#define UHARDDOOM_FIFO_FXCMD_GET			0x0230
+#define UHARDDOOM_FIFO_FXCMD_PUT			0x0234
+#define UHARDDOOM_FIFO_FXCMD_CMD_WINDOW			0x0238
+#define UHARDDOOM_FIFO_FXCMD_DATA_WINDOW		0x023c
+#define UHARDDOOM_FIFO_FXCMD_SIZE			0x40
+#define UHARDDOOM_FIFO_SWRCMD_GET			0x0240
+#define UHARDDOOM_FIFO_SWRCMD_PUT			0x0244
+#define UHARDDOOM_FIFO_SWRCMD_CMD_WINDOW		0x0248
+#define UHARDDOOM_FIFO_SWRCMD_DATA_WINDOW		0x024c
+#define UHARDDOOM_FIFO_SWRCMD_SIZE			0x40
+#define UHARDDOOM_FIFO_CMD_MASK				0x0000000f
+/* The 4 semaphore registers.  Bumped by one by SWR commands, decreased by FE/SRD/SPAN/COL.  */
+#define UHARDDOOM_FIFO_FESEM				0x0250
+#define UHARDDOOM_FIFO_SRDSEM				0x0254
+#define UHARDDOOM_FIFO_COLSEM				0x0258
+#define UHARDDOOM_FIFO_SPANSEM				0x025c
+#define UHARDDOOM_FIFO_SEM_MASK				0x00000001
+#define UHARDDOOM_FIFO_COLIN_GET			0x0260
+#define UHARDDOOM_FIFO_COLIN_PUT			0x0264
+#define UHARDDOOM_FIFO_COLIN_SIZE			0x40
+#define UHARDDOOM_FIFO_FXIN_GET				0x0268
+#define UHARDDOOM_FIFO_FXIN_PUT				0x026c
+#define UHARDDOOM_FIFO_FXIN_SIZE			0x40
+#define UHARDDOOM_FIFO_COLIN_DATA_WINDOW		0x0280
+#define UHARDDOOM_FIFO_FXIN_DATA_WINDOW			0x02c0
+#define UHARDDOOM_FIFO_SPANOUT_GET			0x0300
+#define UHARDDOOM_FIFO_SPANOUT_PUT			0x0304
+#define UHARDDOOM_FIFO_SPANOUT_SIZE			0x40
+#define UHARDDOOM_FIFO_COLOUT_GET			0x0310
+#define UHARDDOOM_FIFO_COLOUT_PUT			0x0314
+#define UHARDDOOM_FIFO_COLOUT_SIZE			0x40
+#define UHARDDOOM_FIFO_COLOUT_MASK_WINDOW		0x0318
+#define UHARDDOOM_FIFO_FXOUT_GET			0x0320
+#define UHARDDOOM_FIFO_FXOUT_PUT			0x0324
+#define UHARDDOOM_FIFO_FXOUT_SIZE			0x40
+#define UHARDDOOM_FIFO_FXOUT_MASK_WINDOW		0x0328
+#define UHARDDOOM_FIFO_SPANOUT_DATA_WINDOW		0x0340
+#define UHARDDOOM_FIFO_COLOUT_DATA_WINDOW		0x0380
+#define UHARDDOOM_FIFO_FXOUT_DATA_WINDOW		0x03c0
 
 /* Section 2.7: TLB.  */
 
@@ -309,6 +364,7 @@
 #define UHARDDOOM_TLB_CLIENT_COL_SRC			5
 #define UHARDDOOM_TLB_CLIENT_SPAN_SRC			6
 #define UHARDDOOM_TLB_CLIENT_SWR_TRANSMAP		7
+#define UHARDDOOM_TLB_CLIENT_NUM			8
 /* The master PD pointers.  */
 #define UHARDDOOM_TLB_KERNEL_PDP			0x0400
 #define UHARDDOOM_TLB_USER_PDP				0x0404
@@ -338,11 +394,11 @@
  * blocks, sends them to COL or FX.  */
 
 #define UHARDDOOM_SRD_STATE				0x0a00
-#define UHARDDOOM_SRD_STATE_FETCH_LENGTH_MASK		0x0000ffff
+#define UHARDDOOM_SRD_STATE_READ_LENGTH_MASK		0x0000ffff
 /* If 1, reads to COL, otherwise reads to FX.  */
 #define UHARDDOOM_SRD_STATE_COL				0x00010000
-/* If 1, waiting on SRDLOCK.  */
-#define UHARDDOOM_SRD_STATE_SRDLOCK			0x10000000
+/* If 1, waiting on SRDSEM.  */
+#define UHARDDOOM_SRD_STATE_SRDSEM			0x10000000
 #define UHARDDOOM_SRD_STATE_MASK			0x1001ffff
 /* The virtual base address of the source.  */
 #define UHARDDOOM_SRD_SRC_PTR				0x0a04
@@ -375,8 +431,8 @@
 #define UHARDDOOM_SPAN_STATE_DRAW_LENGTH_MASK		0x0000ffff
 #define UHARDDOOM_SPAN_STATE_DRAW_XOFF_MASK		0x003f0000
 #define UHARDDOOM_SPAN_STATE_DRAW_XOFF_SHIFT		16
-/* If 1, waiting on SPANLOCK.  */
-#define UHARDDOOM_SPAN_STATE_SPANLOCK			0x10000000
+/* If 1, waiting on SPANSEM.  */
+#define UHARDDOOM_SPAN_STATE_SPANSEM			0x10000000
 #define UHARDDOOM_SPAN_STATE_MASK			0x103fffff
 /* The virtual base address of the source.  */
 #define UHARDDOOM_SPAN_SRC_PTR				0x0a84
@@ -401,11 +457,11 @@
 #define UHARDDOOM_SWR_STATE_DST_BUF_FULL		0x00080000
 #define UHARDDOOM_SWR_STATE_TRANS_POS_MASK		0x07f00000
 #define UHARDDOOM_SWR_STATE_TRANS_POS_SHIFT		20
-/* If 1, pending FELOCK, SRDLOCK, COLLOCK, SPANLOCK.  */
-#define UHARDDOOM_SWR_STATE_FELOCK			0x10000000
-#define UHARDDOOM_SWR_STATE_SRDLOCK			0x20000000
-#define UHARDDOOM_SWR_STATE_COLLOCK			0x40000000
-#define UHARDDOOM_SWR_STATE_SPANLOCK			0x80000000
+/* If 1, pending FESEM, SRDSEM, COLSEM, SPANSEM.  */
+#define UHARDDOOM_SWR_STATE_FESEM			0x10000000
+#define UHARDDOOM_SWR_STATE_SRDSEM			0x20000000
+#define UHARDDOOM_SWR_STATE_COLSEM			0x40000000
+#define UHARDDOOM_SWR_STATE_SPANSEM			0x80000000
 #define UHARDDOOM_SWR_STATE_MASK			0xf7fff7ff
 #define UHARDDOOM_SWR_TRANSMAP_PTR			0x0b04
 #define UHARDDOOM_SWR_DST_PTR				0x0b08
@@ -413,7 +469,7 @@
 #define UHARDDOOM_SWR_DST_PITCH				0x0b0c
 #define UHARDDOOM_SWR_DST_PITCH_MASK			0xffffffc0
 /* 64-bit */
-#define UHARDDOOM_SWR_BLOCK_MASK			0x0b18
+#define UHARDDOOM_SWR_BLOCK_MASK			0x0b10
 /* The three buffers: source data, orignal destination data, post-TRANSMAP
  * data.  If TRANSMAP is not enabled, only SRC_BUF is used.  */
 #define UHARDDOOM_SWR_SRC_BUF(i)			(0x0b40 + (i))
@@ -450,6 +506,7 @@
 #define UHARDDOOM_FX_COL_ENABLE				0x00000080
 #define UHARDDOOM_FX_COL_MASK				0x000000bf
 #define UHARDDOOM_FX_BUF(i)				(0xe00 + (i))
+#define UHARDDOOM_FX_BUF_SIZE				0x100
 #define UHARDDOOM_FX_CMAP(i)				(0xf00 + (i))
 
 /* Section 2.12: COL — the column reader.  Used to read texture data for
@@ -465,8 +522,8 @@
 /* The next column to be textured.  */
 #define UHARDDOOM_COL_STATE_XOFF_MASK			0x03f00000
 #define UHARDDOOM_COL_STATE_XOFF_SHIFT			20
-/* If 1, waiting on COLLOCK.  */
-#define UHARDDOOM_COL_STATE_COLLOCK			0x10000000
+/* If 1, waiting on COLSEM.  */
+#define UHARDDOOM_COL_STATE_COLSEM			0x10000000
 /* Set if LOAD_CMAP_A in progresss.  */
 #define UHARDDOOM_COL_STATE_LOAD_CMAP_A			0x20000000
 /* The current position (in blocks) for LOAD_CMAP_A.  */
@@ -496,13 +553,23 @@
 
 #define UHARDDOOM_COL_COLS_STATE_MASK			0x7f7fff7f
 /* The CMAP_A data (256 bytes).  */
-#define UHARDDOOM_COL_CMAP_A_DATA(i)			(0x2700 + (i))
-/* The pre-textured data.  */
-#define UHARDDOOM_COL_DATA(i, j)			(0x3000 + (i) * 64 + (j))
+#define UHARDDOOM_COL_CMAP_A(i)				(0x2700 + (i))
+/* The pre-textured data.  64 bytes for each lane.  */
+#define UHARDDOOM_COL_DATA(i)				(0x3000 + (i))
+#define UHARDDOOM_COL_DATA_SIZE				64
 
 /* Section 2.13: CACHEs.  */
 
 /* XXX: destined for 0x8000:0x10000 */
+#define UHARDDOOM_CACHE_CLIENT_COL_CMAP_B		0
+#define UHARDDOOM_CACHE_CLIENT_COL_SRC			1
+#define UHARDDOOM_CACHE_CLIENT_SPAN_SRC			2
+#define UHARDDOOM_CACHE_CLIENT_SWR_TRANSMAP		3
+#define UHARDDOOM_CACHE_CLIENT_NUM			4
+
+/* Section 2.14: end.  */
+
+#define UHARDDOOM_BAR_SIZE				0x10000
 
 
 /* Section 3: Page tables.  */
@@ -685,8 +752,8 @@
 #define UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X0(w)	((w) & 0xffff)
 #define UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X1(w)	((w) >> 16 & 0xffff)
 /* Repeat word 1: ustart.  */
-/* Repeat word 2: ustep.  */
-/* Repeat word 3: vstart.  */
+/* Repeat word 2: vstart.  */
+/* Repeat word 3: ustep.  */
 /* Repeat word 4: vstep.  */
 /* Repeat word 5 (if enabled in header): colormap address.  */
 
@@ -697,13 +764,15 @@
 #define UHARDDOOM_BLOCK_SIZE				0x40
 #define UHARDDOOM_BLOCK_MASK				0x3f
 #define UHARDDOOM_BLOCK_SHIFT				6
+#define UHARDDOOM_BLOCK_PTR_MASK			0xffffffc0
+#define UHARDDOOM_BLOCK_PITCH_MASK			0xffffffc0
 #define UHARDDOOM_COORD_MASK				0xffff
 #define UHARDDOOM_COLORMAP_SIZE				0x100
 
 
 /* Section 6: FE core internal memory map.  */
 
-/* Aliases of the FE_ERROR_DATA_* registers.  */
+/* Write-only aliases of the FE_ERROR_DATA_* registers.  */
 #define UHARDDOOM_FEMEM_FE_ERROR_DATA_A			0x00000040
 #define UHARDDOOM_FEMEM_FE_ERROR_DATA_B			0x00000044
 /* When written, triggers FE_ERROR and halts the core.  */
@@ -724,8 +793,8 @@
 #define UHARDDOOM_FEMEM_COLCMD(t)			(0x00000180 + (t) * 4)
 #define UHARDDOOM_FEMEM_FXCMD(t)			(0x000001c0 + (t) * 4)
 #define UHARDDOOM_FEMEM_SWRCMD(t)			(0x00000200 + (t) * 4)
-/* Read to wait for a signal from SWR on the FELOCK interface.  */
-#define UHARDDOOM_FEMEM_FELOCK				0x00000240
+/* Read to wait for a signal from SWR on the FESEM interface.  */
+#define UHARDDOOM_FEMEM_FESEM				0x00000240
 /* Write to bump a STATS counter.  */
 #define UHARDDOOM_FEMEM_STATS_BUMP(t)			(0x00000300 + (t) * 4)
 /* The code RAM — read only from the core.  */
@@ -747,10 +816,10 @@
 #define UHARDDOOM_SRDCMD_TYPE_SRC_PITCH			0x2
 /* Reads blocks.  */
 #define UHARDDOOM_SRDCMD_TYPE_READ			0x3
-#define UHARDDOOM_SRDCMD_TYPE_SRDLOCK			0x4
+#define UHARDDOOM_SRDCMD_TYPE_SRDSEM			0x4
 #define UHARDDOOM_SRDCMD_DATA_READ(len, col)		((len) | (col) << 16)
 #define UHARDDOOM_SRDCMD_DATA_EXTR_READ_LENGTH(cmd)	((cmd) & 0xffff)
-/* Colormap A enable.  */
+/* If set, send blocks to COL, otherwise to FX.  */
 #define UHARDDOOM_SRDCMD_DATA_EXTR_READ_COL(cmd)	((cmd) >> 16 & 1)
 
 /* Section 7.2: SPANCMD — SPAN unit internal commands.  */
@@ -769,8 +838,8 @@
 #define UHARDDOOM_SPANCMD_TYPE_VSTEP			0x7
 /* Emits a given number of texels to the FX.  */
 #define UHARDDOOM_SPANCMD_TYPE_DRAW			0x8
-/* Waits for a signal from SWR on the SPANLOCK interface, then flushes cache.  */
-#define UHARDDOOM_SPANCMD_TYPE_SPANLOCK			0x9
+/* Waits for a signal from SWR on the SPANSEM interface, then flushes cache.  */
+#define UHARDDOOM_SPANCMD_TYPE_SPANSEM			0x9
 
 #define UHARDDOOM_SPANCMD_DATA_UVMASK(ulog, vlog)	((ulog) | (vlog) << 8)
 #define UHARDDOOM_SPANCMD_DATA_EXTR_UVMASK_ULOG(cmd)	((cmd) & 0x3f)
@@ -799,8 +868,8 @@
 #define UHARDDOOM_COLCMD_TYPE_LOAD_CMAP_A		0x7
 /* Emits a given number of blocks to the SWR.  */
 #define UHARDDOOM_COLCMD_TYPE_DRAW			0x8
-/* Waits for a signal from SWR on the COLLOCK interface, then flushes cache.  */
-#define UHARDDOOM_COLCMD_TYPE_COLLOCK			0x9
+/* Waits for a signal from SWR on the COLSEM interface, then flushes cache.  */
+#define UHARDDOOM_COLCMD_TYPE_COLSEM			0x9
 #define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en, uy_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14 | (uy_en) << 15)
 /* The column X coord in the block.  */
 #define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
@@ -868,14 +937,14 @@
 #define UHARDDOOM_SWRCMD_TYPE_DST_PITCH			0x3
 /* Draw blocks from COL or FX.  */
 #define UHARDDOOM_SWRCMD_TYPE_DRAW			0x4
-/* Send a signal on FELOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_FELOCK			0x5
-/* Send a signal on SRDLOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_SRDLOCK			0x6
-/* Send a signal on COLLOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_COLLOCK			0x7
-/* Send a signal on SPANLOCK.  */
-#define UHARDDOOM_SWRCMD_TYPE_SPANLOCK			0x8
+/* Send a signal on FESEM.  */
+#define UHARDDOOM_SWRCMD_TYPE_FESEM			0x5
+/* Send a signal on SRDSEM.  */
+#define UHARDDOOM_SWRCMD_TYPE_SRDSEM			0x6
+/* Send a signal on COLSEM.  */
+#define UHARDDOOM_SWRCMD_TYPE_COLSEM			0x7
+/* Send a signal on SPANSEM.  */
+#define UHARDDOOM_SWRCMD_TYPE_SPANSEM			0x8
 #define UHARDDOOM_SWRCMD_DATA_DRAW(len, c_en, t_en)	((len) | (c_en) << 16 | (t_en) << 17)
 #define UHARDDOOM_SWRCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)
 /* If set, draw from COL, otherwise from FX.  */

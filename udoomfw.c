@@ -51,6 +51,8 @@ static volatile uint32_t *const COLCMD = (void *)UHARDDOOM_FEMEM_COLCMD(0);
 static volatile uint32_t *const FXCMD = (void *)UHARDDOOM_FEMEM_FXCMD(0);
 static volatile uint32_t *const SWRCMD = (void *)UHARDDOOM_FEMEM_SWRCMD(0);
 
+static volatile uint32_t *const FELOCK = (void *)UHARDDOOM_FEMEM_FELOCK;
+
 static uint32_t cmd_ptr;
 
 static noreturn void error(int code, uint32_t data_a, uint32_t data_b) {
@@ -221,6 +223,11 @@ static void swrcmd_draw_fx(uint32_t num, bool trans_en) {
 
 static void swrcmd_draw_col(uint32_t num, bool trans_en) {
 	SWRCMD[UHARDDOOM_SWRCMD_TYPE_DRAW] = UHARDDOOM_SWRCMD_DATA_DRAW(num, true, trans_en);
+}
+
+static void felock(void) {
+	SWRCMD[UHARDDOOM_SWRCMD_TYPE_FELOCK] = 0;
+	*FELOCK;
 }
 
 static void cmd_fill_rect(uint32_t cmd_header) {
@@ -794,8 +801,8 @@ static void cmd_draw_spans(uint32_t cmd_header) {
 		if (x1 < x0)
 			error(UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV, cmd_ptr, wr0);
 		spancmd_ustart(*CMD_FETCH);
-		spancmd_ustep(*CMD_FETCH);
 		spancmd_vstart(*CMD_FETCH);
+		spancmd_ustep(*CMD_FETCH);
 		spancmd_vstep(*CMD_FETCH);
 		if (cmap_en) {
 			uint32_t cmap_ptr = *CMD_FETCH;
@@ -854,6 +861,7 @@ noreturn void main() {
 					error(UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND, cmd_ptr, cmd_header);
 			}
 		}
+		felock();
 		*JOB_DONE = 0;
 	}
 }

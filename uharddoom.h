@@ -544,14 +544,16 @@
 #define UHARDDOOM_COL_COLS_USTEP(i)			(0x2500 + (i) * 4)
 #define UHARDDOOM_COL_COLS_STATE(i)			(0x2600 + (i) * 4)
 #define UHARDDOOM_COL_COLS_STATE_DATA_CMAP_MASK		0x0000007f
+#define UHARDDOOM_COL_COLS_STATE_DATA_CMAP_SHIFT	0
 #define UHARDDOOM_COL_COLS_STATE_ULOG_MASK		0x00001f00
 #define UHARDDOOM_COL_COLS_STATE_COL_EN			0x00002000
 #define UHARDDOOM_COL_COLS_STATE_CMAP_B_EN		0x00004000
-#define UHARDDOOM_COL_COLS_STATE_UY_EN			0x00008000
-#define UHARDDOOM_COL_COLS_STATE_DATA_GET_MASK		0x007f0000
-#define UHARDDOOM_COL_COLS_STATE_DATA_PUT_MASK		0x7f000000
+#define UHARDDOOM_COL_COLS_STATE_DATA_GET_MASK		0x003f0000
+#define UHARDDOOM_COL_COLS_STATE_DATA_GET_SHIFT		16
+#define UHARDDOOM_COL_COLS_STATE_DATA_PUT_MASK		0x3f000000
+#define UHARDDOOM_COL_COLS_STATE_DATA_PUT_SHIFT		24
 
-#define UHARDDOOM_COL_COLS_STATE_MASK			0x7f7fff7f
+#define UHARDDOOM_COL_COLS_STATE_MASK			0x3f3f7f3f
 /* The CMAP_A data (256 bytes).  */
 #define UHARDDOOM_COL_CMAP_A(i)				(0x2700 + (i))
 /* The pre-textured data.  64 bytes for each lane.  */
@@ -560,12 +562,17 @@
 
 /* Section 2.13: CACHEs.  */
 
-/* XXX: destined for 0x8000:0x10000 */
 #define UHARDDOOM_CACHE_CLIENT_COL_CMAP_B		0
 #define UHARDDOOM_CACHE_CLIENT_COL_SRC			1
 #define UHARDDOOM_CACHE_CLIENT_SPAN_SRC			2
 #define UHARDDOOM_CACHE_CLIENT_SWR_TRANSMAP		3
 #define UHARDDOOM_CACHE_CLIENT_NUM			4
+#define UHARDDOOM_CACHE_TAG(i)				(0x8000 + (i) * 4)
+#define UHARDDOOM_CACHE_DATA(i)				(0xc000 + (i))
+#define UHARDDOOM_CACHE_SIZE				64
+#define UHARDDOOM_CACHE_TAG_VA_MASK			0xffffffc0
+#define UHARDDOOM_CACHE_TAG_VALID			0x00000001
+#define UHARDDOOM_CACHE_TAG_MASK			0xffffffc1
 
 /* Section 2.14: end.  */
 
@@ -870,7 +877,7 @@
 #define UHARDDOOM_COLCMD_TYPE_DRAW			0x8
 /* Waits for a signal from SWR on the COLSEM interface, then flushes cache.  */
 #define UHARDDOOM_COLCMD_TYPE_COLSEM			0x9
-#define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en, uy_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14 | (uy_en) << 15)
+#define UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, col_en, cmap_b_en)	((x) | (ulog) << 8 | (col_en) << 13 | (cmap_b_en) << 14)
 /* The column X coord in the block.  */
 #define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
 /* U coord mask.  */
@@ -882,7 +889,6 @@
 #define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_CMAP_B_EN(cmd)	((cmd) >> 14 & 1)
 /* If enabled, U is mapped to y coord within the source (ie. multiplied by
  * source pitch), otherwise x.  */
-#define UHARDDOOM_COLCMD_DATA_EXTR_COL_SETUP_UY_EN(cmd)	((cmd) >> 15 & 1)
 #define UHARDDOOM_COLCMD_DATA_DRAW(len, cmap_a_en)	((len) | (cmap_a_en) << 16)
 /* Number of blocks to be drawn.  */
 #define UHARDDOOM_COLCMD_DATA_EXTR_DRAW_LENGTH(cmd)	((cmd) & 0xffff)

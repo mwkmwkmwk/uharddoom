@@ -140,12 +140,12 @@ static void colcmd_col_ustep(uint32_t val) {
 	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_USTEP] = val;
 }
 
-static void colcmd_col_enable(uint32_t x, uint32_t ulog, bool cmap_b_en, bool uy_en) {
-	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, true, cmap_b_en, uy_en);
+static void colcmd_col_enable(uint32_t x, uint32_t ulog, bool cmap_b_en) {
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, true, cmap_b_en);
 }
 
 static void colcmd_col_disable(uint32_t x) {
-	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, 0, false, false, false);
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, 0, false, false);
 }
 
 static void colcmd_load_cmap_a(void) {
@@ -505,13 +505,13 @@ static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr,
 			case WIPE_OP_START_A:
 				colcmd_col_src_ptr(src_a_ptr + opx);
 				colcmd_col_src_pitch(src_a_pitch);
-				colcmd_col_enable(opx, 0x10, false, true);
+				colcmd_col_enable(opx, 0x10, false);
 				active++;
 				break;
 			case WIPE_OP_START_B:
 				colcmd_col_src_ptr(src_b_ptr + opx);
 				colcmd_col_src_pitch(src_b_pitch);
-				colcmd_col_enable(opx, 0x10, false, true);
+				colcmd_col_enable(opx, 0x10, false);
 				active++;
 				break;
 			case WIPE_OP_STOP_A:
@@ -614,7 +614,7 @@ static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a
 			colcmd_col_ustart(dc_mem_ustart[opi]);
 			colcmd_col_ustep(dc_mem_ustep[opi]);
 			colcmd_col_cmap_b_ptr(dc_mem_cmap_b_ptr[opi]);
-			colcmd_col_enable(x, ulog, cmap_b_en, false);
+			colcmd_col_enable(x, ulog, cmap_b_en);
 			active++;
 		} else {
 			colcmd_col_disable(x);
@@ -645,6 +645,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 		swrcmd_transmap_ptr(*CMD_FETCH);
 	}
 	uint32_t xlast = 0;
+	colcmd_col_src_pitch(1);
 	while (num--) {
 		uint32_t wr0 = *CMD_FETCH;
 		uint32_t x = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(wr0);

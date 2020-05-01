@@ -375,6 +375,8 @@
 /* The per-client singular PTE TLBs.  */
 #define UHARDDOOM_TLB_CLIENT_PTE_TAG(i)			(0x0440 + (i) * 8)
 #define UHARDDOOM_TLB_CLIENT_PTE_VALUE(i)		(0x0444 + (i) * 8)
+/* The last translated virt address for each client (useful for page fault handling).  */
+#define UHARDDOOM_TLB_CLIENT_VA(i)			(0x0480 + (i) * 4)
 /* The PTE cache pool.  */
 #define UHARDDOOM_TLB_POOL_PTE_TAG(i)			(0x0600 + (i) * 8)
 #define UHARDDOOM_TLB_POOL_PTE_VALUE(i)			(0x0604 + (i) * 8)
@@ -489,9 +491,11 @@
 #define UHARDDOOM_FX_STATE_DRAW_FETCH_SRD		0x00100000
 #define UHARDDOOM_FX_STATE_DRAW_FETCH_SPAN		0x00200000
 #define UHARDDOOM_FX_STATE_DRAW_FETCH_DONE		0x00400000
-#define UHARDDOOM_FX_STATE_DRAW_SKIP_NON_FIRST		0x00800000
-#define UHARDDOOM_FX_STATE_LOAD_CMAP			0x10000000
-#define UHARDDOOM_FX_STATE_INIT_FUZZ			0x20000000
+#define UHARDDOOM_FX_STATE_DRAW_NON_FIRST		0x00800000
+#define UHARDDOOM_FX_STATE_LOAD_MODE_CMAP		0x10000000
+#define UHARDDOOM_FX_STATE_LOAD_MODE_BLOCK		0x20000000
+#define UHARDDOOM_FX_STATE_LOAD_MODE_FUZZ		0x30000000
+#define UHARDDOOM_FX_STATE_LOAD_MODE_MASK		0x30000000
 #define UHARDDOOM_FX_STATE_LOAD_CNT_MASK		0xc0000000
 #define UHARDDOOM_FX_STATE_LOAD_CNT_SHIFT		30
 #define UHARDDOOM_FX_STATE_MASK				0xf0ffffff
@@ -898,18 +902,20 @@
 /* Section 7.4: FXCMD — FX unit internal commands.  */
 
 #define UHARDDOOM_FXCMD_TYPE_NOP			0x0
-/* Fills the whole buffer with a single color.  */
-#define UHARDDOOM_FXCMD_TYPE_FILL_COLOR			0x1
 /* Loads 4 blocks from FXIN as the colormap.  */
-#define UHARDDOOM_FXCMD_TYPE_LOAD_CMAP			0x2
+#define UHARDDOOM_FXCMD_TYPE_LOAD_CMAP			0x1
+/* Loads 1 block from FXIN to the buffer.  */
+#define UHARDDOOM_FXCMD_TYPE_LOAD_BLOCK			0x2
 /* Loads 2 blocks from FXIN to the buffer.  */
-#define UHARDDOOM_FXCMD_TYPE_INIT_FUZZ			0x3
+#define UHARDDOOM_FXCMD_TYPE_LOAD_FUZZ			0x3
+/* Fills the whole buffer with a single color.  */
+#define UHARDDOOM_FXCMD_TYPE_FILL_COLOR			0x4
 /* Sets FUZZ state for a column.  */
-#define UHARDDOOM_FXCMD_TYPE_COL_SETUP			0x4
+#define UHARDDOOM_FXCMD_TYPE_COL_SETUP			0x5
 /* Sets how many columns should be masked off at start/end.  */
-#define UHARDDOOM_FXCMD_TYPE_SKIP			0x5
+#define UHARDDOOM_FXCMD_TYPE_SKIP			0x6
 /* Draws stuff.  */
-#define UHARDDOOM_FXCMD_TYPE_DRAW			0x6
+#define UHARDDOOM_FXCMD_TYPE_DRAW			0x7
 #define UHARDDOOM_FXCMD_DATA_COL_SETUP(x, pos, en)		((x) | (pos) << 8 | (en) << 15)
 #define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_X(cmd)	((cmd) & 0x3f)
 #define UHARDDOOM_FXCMD_DATA_EXTR_COL_SETUP_FUZZPOS(cmd)	((cmd) >> 8 & 0x3f)

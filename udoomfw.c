@@ -161,16 +161,20 @@ static void colsem(void) {
 	COLCMD[UHARDDOOM_COLCMD_TYPE_COLSEM] = 0;
 }
 
-static void fxcmd_fill_color(uint32_t color) {
-	FXCMD[UHARDDOOM_FXCMD_TYPE_FILL_COLOR] = color;
-}
-
 static void fxcmd_load_cmap(void) {
 	FXCMD[UHARDDOOM_FXCMD_TYPE_LOAD_CMAP] = 0;
 }
 
-static void fxcmd_init_fuzz(void) {
-	FXCMD[UHARDDOOM_FXCMD_TYPE_INIT_FUZZ] = 0;
+static void fxcmd_load_block(void) {
+	FXCMD[UHARDDOOM_FXCMD_TYPE_LOAD_BLOCK] = 0;
+}
+
+static void fxcmd_load_fuzz(void) {
+	FXCMD[UHARDDOOM_FXCMD_TYPE_LOAD_FUZZ] = 0;
+}
+
+static void fxcmd_fill_color(uint32_t color) {
+	FXCMD[UHARDDOOM_FXCMD_TYPE_FILL_COLOR] = color;
 }
 
 static void fxcmd_col_enable(uint32_t x, uint32_t fuzzpos) {
@@ -706,7 +710,7 @@ static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzs
 					srdcmd_src_ptr(dst_ptr + (opy - 1) * dst_pitch);
 					srdcmd_read_fx(1);
 				}
-				fxcmd_init_fuzz();
+				fxcmd_load_fuzz();
 				swrcmd_dst_ptr(dst_ptr + opy * dst_pitch);
 			}
 			active++;
@@ -740,6 +744,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 	srdcmd_src_pitch(UHARDDOOM_BLOCK_SIZE);
 	srdcmd_read_fx(4);
 	fxcmd_load_cmap();
+	fxcmd_skip(0, 0, false);
 
 	uint32_t xlast = 0;
 	while (num--) {

@@ -760,7 +760,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 		uint32_t y0 = UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y0(wr1);
 		uint32_t y1 = UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y1(wr1);
 		if (y0 > y1)
-			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr0);
+			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
 
 		uint32_t idx = dc_mem_idx++;
 		dc_mem_wr0[idx] = wr0;

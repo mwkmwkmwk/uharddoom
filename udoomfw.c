@@ -315,14 +315,15 @@ static void cmd_draw_line(uint32_t cmd_header) {
 		uint32_t xlast = x1;
 		for (uint32_t x = x1; x <= x2; x++) {
 			if (delta > 0) {
-				draw_line_horiz_seg(dst_ptr, xlast, x);
+				draw_line_horiz_seg(dst_ptr, xlast, x+1);
 				dst_ptr += dst_pitch;
-				xlast = x;
+				xlast = x+1;
 				delta -= 2 * dx;
 			}
 			delta += 2 * dy;
 		}
-		draw_line_horiz_seg(dst_ptr, xlast, x2 + 1);
+		if (xlast != x2 + 1)
+			draw_line_horiz_seg(dst_ptr, xlast, x2 + 1);
 	} else {
 		/* Mostly-vertical line.  */
 		swrcmd_dst_pitch(dst_pitch);
@@ -340,7 +341,8 @@ static void cmd_draw_line(uint32_t cmd_header) {
 			}
 			delta += 2 * dx;
 		}
-		draw_line_vert_seg(dst_ptr, x1, num);
+		if (num)
+			draw_line_vert_seg(dst_ptr, x1, num);
 	}
 }
 

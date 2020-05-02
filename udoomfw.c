@@ -503,7 +503,7 @@ static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr,
 		if (opy != ylast && active) {
 			uint32_t num = opy - ylast;
 			colcmd_draw(num, false);
-			swrcmd_dst_ptr(dst_ptr + opy * dst_pitch);
+			swrcmd_dst_ptr(dst_ptr + ylast * dst_pitch);
 			swrcmd_draw_col(num, false);
 		}
 		ylast = opy;
@@ -609,7 +609,7 @@ static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a
 		if (opy != ylast && active) {
 			uint32_t num = opy - ylast;
 			colcmd_draw(num, cmap_a_en);
-			swrcmd_dst_ptr(dst_ptr + opy * dst_pitch);
+			swrcmd_dst_ptr(dst_ptr + ylast * dst_pitch);
 			swrcmd_draw_col(num, trans_en);
 		}
 		ylast = opy;

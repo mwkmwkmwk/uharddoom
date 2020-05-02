@@ -230,7 +230,7 @@ static void swrcmd_draw_col(uint32_t num, bool trans_en) {
 }
 
 static void fesem(void) {
-	SWRCMD[UHARDDOOM_SWRCMD_TYPE_FESEM] = 0;
+	SRDCMD[UHARDDOOM_SRDCMD_TYPE_FESEM] = 0;
 	*FESEM;
 }
 
@@ -867,6 +867,7 @@ noreturn void main() {
 					error(UHARDDOOM_FE_ERROR_CODE_UNK_USER_COMMAND, cmd_ptr, cmd_header);
 			}
 		}
+		srdsem();
 		fesem();
 		*JOB_DONE = 0;
 	}

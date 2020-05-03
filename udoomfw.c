@@ -140,12 +140,12 @@ static void colcmd_col_ustep(uint32_t val) {
 	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_USTEP] = val;
 }
 
-static void colcmd_col_enable(uint32_t x, uint32_t ulog, bool cmap_b_en) {
-	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, ulog, true, cmap_b_en);
+static void colcmd_col_enable(uint32_t x, bool cmap_b_en, uint32_t height) {
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, true, cmap_b_en, height);
 }
 
 static void colcmd_col_disable(uint32_t x) {
-	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, 0, false, false);
+	COLCMD[UHARDDOOM_COLCMD_TYPE_COL_SETUP] = UHARDDOOM_COLCMD_DATA_COL_SETUP(x, false, false, 0);
 }
 
 static void colcmd_load_cmap_a(void) {
@@ -232,6 +232,11 @@ static void swrcmd_draw_col(uint32_t num, bool trans_en) {
 static void fesem(void) {
 	SRDCMD[UHARDDOOM_SRDCMD_TYPE_FESEM] = 0;
 	*FESEM;
+}
+
+static void assert(bool x) {
+	if (!x)
+		__builtin_trap();
 }
 
 static void cmd_fill_rect(uint32_t cmd_header) {
@@ -398,9 +403,9 @@ static void cmd_blit(uint32_t cmd_header) {
 		spancmd_src_pitch(src_pitch);
 		spancmd_uvmask(ulog, vlog);
 		uint32_t ustep = (src_w << 16) / dst_w;
-		uint32_t ustart = (src_x << 16) + 0x8000;
+		uint32_t ustart = (src_x << 16);
 		uint32_t vstep = (src_h << 16) / dst_h;
-		uint32_t vstart = (src_y << 16) + 0x8000;
+		uint32_t vstart = (src_y << 16);
 		spancmd_ustep(ustep);
 		spancmd_vstep(0);
 		/* Finish SWR work.  */
@@ -511,22 +516,24 @@ static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr,
 			case WIPE_OP_START_A:
 				colcmd_col_src_ptr(src_a_ptr + opx);
 				colcmd_col_src_pitch(src_a_pitch);
-				colcmd_col_enable(opx, 0x10, false);
+				colcmd_col_enable(opx, false, 0);
 				active++;
 				break;
 			case WIPE_OP_START_B:
 				colcmd_col_src_ptr(src_b_ptr + opx);
 				colcmd_col_src_pitch(src_b_pitch);
-				colcmd_col_enable(opx, 0x10, false);
+				colcmd_col_enable(opx, false, 0);
 				active++;
 				break;
 			case WIPE_OP_STOP_A:
 			case WIPE_OP_STOP_B:
 				colcmd_col_disable(opx);
+				assert(active != 0);
 				active--;
 				break;
 		}
 	}
+	assert(active == 0);
 }
 
 static void cmd_wipe(uint32_t cmd_header) {
@@ -615,18 +622,20 @@ static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a
 		ylast = opy;
 		uint32_t x = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(dc_mem_wr0[opi]) & UHARDDOOM_BLOCK_MASK;
 		if (op == DC_OP_START) {
-			uint32_t ulog = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_ULOG(dc_mem_wr0[opi]);
+			uint32_t height = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_SRC_HEIGHT(dc_mem_wr0[opi]);
 			colcmd_col_src_ptr(dc_mem_tex_ptr[opi]);
 			colcmd_col_ustart(dc_mem_ustart[opi]);
 			colcmd_col_ustep(dc_mem_ustep[opi]);
 			colcmd_col_cmap_b_ptr(dc_mem_cmap_b_ptr[opi]);
-			colcmd_col_enable(x, ulog, cmap_b_en);
+			colcmd_col_enable(x, cmap_b_en, height);
 			active++;
 		} else {
 			colcmd_col_disable(x);
+			assert(active != 0);
 			active--;
 		}
 	}
+	assert(active == 0);
 	dc_mem_idx = 0;
 }
 
@@ -651,6 +660,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 		swrcmd_transmap_ptr(*CMD_FETCH);
 	}
 	uint32_t xlast = 0;
+	uint32_t xl = 0, yl = 0;
 	colcmd_col_src_pitch(1);
 	while (num--) {
 		uint32_t wr0 = *CMD_FETCH;
@@ -665,6 +675,9 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 		if (y0 > y1)
 			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
 
+		if (x < xl || (x == xl && y0 < yl))
+			draw_columns_flush(dst_ptr, dst_pitch, cmap_a_en, cmap_b_en, trans_en);
+
 		uint32_t idx = dc_mem_idx++;
 		dc_mem_wr0[idx] = wr0;
 		dc_mem_tex_ptr[idx] = *CMD_FETCH;
@@ -674,7 +687,10 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 			dc_mem_cmap_b_ptr[idx] = *CMD_FETCH;
 
 		heap_put(DC_OP(DC_OP_START, idx, y0));
-		heap_put(DC_OP(DC_OP_START, idx, y1 + 1));
+		heap_put(DC_OP(DC_OP_STOP, idx, y1 + 1));
+
+		xl = x;
+		yl = y1 + 1;
 
 		if (dc_mem_idx == DC_MEM_SIZE)
 			draw_columns_flush(dst_ptr, dst_pitch, cmap_a_en, cmap_b_en, trans_en);
@@ -720,6 +736,7 @@ static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzs
 			fxcmd_col_enable(x, fuzzpos);
 		} else {
 			fxcmd_col_disable(x);
+			assert(active != 0);
 			active--;
 			if (!active) {
 				if (opy == fuzzend + 1)
@@ -728,6 +745,7 @@ static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzs
 			}
 		}
 	}
+	assert(active == 0);
 	dc_mem_idx = 0;
 }
 
@@ -747,8 +765,10 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 	srdcmd_read_fx(4);
 	fxcmd_load_cmap();
 	fxcmd_skip(0, 0, false);
+	srdcmd_src_pitch(dst_pitch);
 
 	uint32_t xlast = 0;
+	uint32_t xl = 0, yl = 0;
 	while (num--) {
 		uint32_t wr0 = *CMD_FETCH;
 		uint32_t x = UHARDDOOM_USER_DRAW_FUZZ_WR0_EXTR_X(wr0);
@@ -762,11 +782,17 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 		if (y0 > y1)
 			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
 
+		if (x < xl || (x == xl && y0 < yl))
+			draw_fuzz_flush(dst_ptr, dst_pitch, fuzzstart, fuzzend);
+
 		uint32_t idx = dc_mem_idx++;
 		dc_mem_wr0[idx] = wr0;
 
 		heap_put(DC_OP(DC_OP_START, idx, y0));
-		heap_put(DC_OP(DC_OP_START, idx, y1 + 1));
+		heap_put(DC_OP(DC_OP_STOP, idx, y1 + 1));
+
+		xl = x;
+		yl = y1 + 1;
 
 		if (dc_mem_idx == DC_MEM_SIZE)
 			draw_fuzz_flush(dst_ptr, dst_pitch, fuzzstart, fuzzend);

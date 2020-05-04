@@ -650,7 +650,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 	if (cmap_a_en) {
 		uint32_t cmap_a_ptr = *CMD_FETCH;
 		if (cmap_a_ptr & UHARDDOOM_BLOCK_MASK)
-			error(UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED, cmd_ptr, cmap_a_ptr);
+			error(UHARDDOOM_FE_ERROR_CODE_COLORMAP_UNALIGNED, cmd_ptr, cmap_a_ptr);
 		srdcmd_src_ptr(cmap_a_ptr);
 		srdcmd_src_pitch(UHARDDOOM_BLOCK_SIZE);
 		srdcmd_read_col(4);
@@ -673,7 +673,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 		uint32_t y0 = UHARDDOOM_USER_DRAW_COLUMNS_WR1_EXTR_Y0(wr1);
 		uint32_t y1 = UHARDDOOM_USER_DRAW_COLUMNS_WR1_EXTR_Y1(wr1);
 		if (y0 > y1)
-			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
+			error(UHARDDOOM_FE_ERROR_CODE_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
 
 		if (x < xl || (x == xl && y0 < yl))
 			draw_columns_flush(dst_ptr, dst_pitch, cmap_a_en, cmap_b_en, trans_en);
@@ -759,7 +759,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 	uint32_t fuzzend = UHARDDOOM_USER_DRAW_FUZZ_W3_EXTR_FUZZEND(w3);
 	uint32_t cmap_ptr = *CMD_FETCH;
 	if (cmap_ptr & UHARDDOOM_BLOCK_MASK)
-		error(UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED, cmd_ptr, cmap_ptr);
+		error(UHARDDOOM_FE_ERROR_CODE_COLORMAP_UNALIGNED, cmd_ptr, cmap_ptr);
 	srdcmd_src_ptr(cmap_ptr);
 	srdcmd_src_pitch(UHARDDOOM_BLOCK_SIZE);
 	srdcmd_read_fx(4);
@@ -780,7 +780,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 		uint32_t y0 = UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y0(wr1);
 		uint32_t y1 = UHARDDOOM_USER_DRAW_FUZZ_WR1_EXTR_Y1(wr1);
 		if (y0 > y1)
-			error(UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
+			error(UHARDDOOM_FE_ERROR_CODE_DRAW_COLUMNS_Y_REV, cmd_ptr, wr1);
 
 		if (x < xl || (x == xl && y0 < yl))
 			draw_fuzz_flush(dst_ptr, dst_pitch, fuzzstart, fuzzend);
@@ -833,7 +833,7 @@ static void cmd_draw_spans(uint32_t cmd_header) {
 		uint32_t x0 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X0(wr0);
 		uint32_t x1 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X1(wr0);
 		if (x1 < x0)
-			error(UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV, cmd_ptr, wr0);
+			error(UHARDDOOM_FE_ERROR_CODE_DRAW_SPANS_X_REV, cmd_ptr, wr0);
 		spancmd_ustart(*CMD_FETCH);
 		spancmd_vstart(*CMD_FETCH);
 		spancmd_ustep(*CMD_FETCH);
@@ -842,7 +842,7 @@ static void cmd_draw_spans(uint32_t cmd_header) {
 			uint32_t cmap_ptr = *CMD_FETCH;
 			if (cmap_ptr != last_cmap_ptr) {
 				if (cmap_ptr & UHARDDOOM_BLOCK_MASK)
-					error(UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED, cmd_ptr, cmap_ptr);
+					error(UHARDDOOM_FE_ERROR_CODE_COLORMAP_UNALIGNED, cmd_ptr, cmap_ptr);
 				srdcmd_src_ptr(cmap_ptr);
 				srdcmd_read_fx(4);
 				fxcmd_load_cmap();

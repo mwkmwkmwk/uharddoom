@@ -272,11 +272,11 @@
 /* Unaligned dst pitch.  Data A is cmd pointer, data B is dst pitch.  */
 #define UHARDDOOM_FE_ERROR_CODE_DST_PITCH_UNALIGNED	0x00000002
 /* Unaligned colormap pointer.  Data A is cmd pointer, data B is colormap pointer.  */
-#define UHARDDOOM_FE_ERROR_COLORMAP_UNALIGNED		0x00000003
+#define UHARDDOOM_FE_ERROR_CODE_COLORMAP_UNALIGNED	0x00000003
 /* Y coordinates for DRAW_COLUMNS in wrong order.  Data A is cmd pointer, data B is command word.  */
-#define UHARDDOOM_FE_ERROR_DRAW_COLUMNS_Y_REV		0x00000004
+#define UHARDDOOM_FE_ERROR_CODE_DRAW_COLUMNS_Y_REV	0x00000004
 /* X coordinates for DRAW_SPANS in wrong order.  Data A is cmd pointer, data B is command word.  */
-#define UHARDDOOM_FE_ERROR_DRAW_SPANS_X_REV		0x00000005
+#define UHARDDOOM_FE_ERROR_CODE_DRAW_SPANS_X_REV	0x00000005
 /* The FE core encountered an illegal instruction.  A is address, B is
  * the instruction opcode.  */
 #define UHARDDOOM_FE_ERROR_CODE_ILLEGAL_INSTRUCTION	0x00000080

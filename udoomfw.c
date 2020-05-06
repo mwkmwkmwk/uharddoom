@@ -53,6 +53,8 @@ static volatile uint32_t *const SWRCMD = (void *)UHARDDOOM_FEMEM_SWRCMD(0);
 
 static volatile uint32_t *const FESEM = (void *)UHARDDOOM_FEMEM_FESEM;
 
+static volatile uint32_t *const STAT_BUMP = (void *)UHARDDOOM_FEMEM_STAT_BUMP(0);
+
 static uint32_t cmd_ptr;
 
 static noreturn void error(int code, uint32_t data_a, uint32_t data_b) {
@@ -240,6 +242,7 @@ static void assert(bool x) {
 }
 
 static void cmd_fill_rect(uint32_t cmd_header) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_FILL_RECT] = 1;
 	fxcmd_fill_color(UHARDDOOM_USER_FILL_RECT_HEADER_EXTR_COLOR(cmd_header));
 	uint32_t dst_ptr = *CMD_FETCH;
 	uint32_t dst_pitch = *CMD_FETCH;
@@ -257,6 +260,7 @@ static void cmd_fill_rect(uint32_t cmd_header) {
 	fxcmd_skip(x, skip_end, false);
 	swrcmd_dst_pitch(UHARDDOOM_BLOCK_SIZE);
 	while (h--) {
+		STAT_BUMP[UHARDDOOM_STAT_FW_FILL_RECT_SPAN] = 1;
 		fxcmd_draw_buf(blocks);
 		swrcmd_dst_ptr(dst_ptr);
 		swrcmd_draw_fx(blocks, false);
@@ -265,6 +269,7 @@ static void cmd_fill_rect(uint32_t cmd_header) {
 }
 
 static void draw_line_horiz_seg(uint32_t dst_ptr, uint32_t xb, uint32_t xe) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_LINE_HORIZ_SEG] = 1;
 	uint32_t skip_begin = xb & UHARDDOOM_BLOCK_MASK;
 	uint32_t skip_end = -xe & UHARDDOOM_BLOCK_MASK;
 	uint32_t blocks = (skip_begin + skip_end + xe - xb) >> UHARDDOOM_BLOCK_SHIFT;
@@ -275,6 +280,7 @@ static void draw_line_horiz_seg(uint32_t dst_ptr, uint32_t xb, uint32_t xe) {
 }
 
 static void draw_line_vert_seg(uint32_t dst_ptr, uint32_t x, uint32_t num) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_LINE_VERT_SEG] = 1;
 	uint32_t xl = x & UHARDDOOM_BLOCK_MASK;
 	fxcmd_skip(xl, UHARDDOOM_BLOCK_MASK - xl, true);
 	fxcmd_draw_buf(num);
@@ -315,6 +321,7 @@ static void cmd_draw_line(uint32_t cmd_header) {
 	}
 	if (dx > dy) {
 		/* Mostly-horizontal line.  */
+		STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_LINE_HORIZ] = 1;
 		swrcmd_dst_pitch(UHARDDOOM_BLOCK_SIZE);
 		int32_t delta = 2 * (int32_t)dy - (int32_t)dx;
 		uint32_t xlast = x1;
@@ -331,6 +338,7 @@ static void cmd_draw_line(uint32_t cmd_header) {
 			draw_line_horiz_seg(dst_ptr, xlast, x2 + 1);
 	} else {
 		/* Mostly-vertical line.  */
+		STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_LINE_VERT] = 1;
 		swrcmd_dst_pitch(dst_pitch);
 		int32_t delta = 2 * (int32_t)dx - (int32_t)dy;
 		uint32_t num = 0;
@@ -378,6 +386,7 @@ static void cmd_blit(uint32_t cmd_header) {
 	/* Decide on the path.  */
 	if (src_w == dst_w && src_h == dst_h && (src_x & UHARDDOOM_BLOCK_MASK) == dst_x && ulog == 0x10 && vlog == 0x10 && !(src_ptr & UHARDDOOM_BLOCK_MASK) && !(src_pitch & UHARDDOOM_BLOCK_MASK)) {
 		/* Simple case, no scaling, no intra-block shift — use SRD.  */
+		STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_SIMPLE] = 1;
 		src_ptr += src_y * src_pitch;
 		src_ptr += src_x & ~UHARDDOOM_BLOCK_MASK;
 		src_x &= UHARDDOOM_BLOCK_MASK;
@@ -389,6 +398,7 @@ static void cmd_blit(uint32_t cmd_header) {
 		fxcmd_skip(dst_x, skip_end, false);
 		srdcmd_src_pitch(UHARDDOOM_BLOCK_SIZE);
 		while (dst_h--) {
+			STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_SIMPLE_SPAN] = 1;
 			srdcmd_src_ptr(src_ptr);
 			srdcmd_read_fx(blocks);
 			fxcmd_draw_srd(blocks, false);
@@ -398,7 +408,8 @@ static void cmd_blit(uint32_t cmd_header) {
 			dst_ptr += dst_pitch;
 		}
 	} else {
-		/* Hard case, use SPAN.  */
+		/* Complex case, use SPAN.  */
+		STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_COMPLEX] = 1;
 		spancmd_src_ptr(src_ptr);
 		spancmd_src_pitch(src_pitch);
 		spancmd_uvmask(ulog, vlog);
@@ -415,6 +426,7 @@ static void cmd_blit(uint32_t cmd_header) {
 		uint32_t blocks = (dst_w + dst_x + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
 		fxcmd_skip(dst_x, skip_end, false);
 		while (dst_h--) {
+			STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_COMPLEX_SPAN] = 1;
 			spancmd_ustart(ustart);
 			spancmd_vstart(vstart);
 			spancmd_draw(dst_w, dst_x);
@@ -500,6 +512,7 @@ enum {
 static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr, uint32_t src_a_pitch, uint32_t src_b_ptr, uint32_t src_b_pitch) {
 	uint32_t active = 0;
 	uint32_t ylast = 0;
+	STAT_BUMP[UHARDDOOM_STAT_FW_WIPE_BATCH] = 1;
 	while (!heap_empty()) {
 		uint32_t opw = heap_get();
 		uint32_t opy = opw >> 12;
@@ -510,6 +523,7 @@ static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr,
 			colcmd_draw(num, false);
 			swrcmd_dst_ptr(dst_ptr + ylast * dst_pitch);
 			swrcmd_draw_col(num, false);
+			STAT_BUMP[UHARDDOOM_STAT_FW_WIPE_SEG] = 1;
 		}
 		ylast = opy;
 		switch (op) {
@@ -537,6 +551,7 @@ static void wipe_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t src_a_ptr,
 }
 
 static void cmd_wipe(uint32_t cmd_header) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_WIPE] = 1;
 	uint32_t dst_ptr = *CMD_FETCH;
 	uint32_t dst_pitch = *CMD_FETCH;
 	uint32_t w3 = *CMD_FETCH;
@@ -561,6 +576,7 @@ static void cmd_wipe(uint32_t cmd_header) {
 	swrcmd_dst_pitch(dst_pitch);
 	colsem();
 	while (w--) {
+		STAT_BUMP[UHARDDOOM_STAT_FW_WIPE_COL] = 1;
 		uint32_t yoff = *CMD_FETCH & UHARDDOOM_COORD_MASK;
 		if (yoff > h)
 			yoff = h;
@@ -605,6 +621,7 @@ enum {
 static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a_en, bool cmap_b_en, bool trans_en) {
 	if (heap_empty())
 		return;
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_COLUMNS_BATCH] = 1;
 	dst_ptr += UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(dc_mem_wr0[0]) & ~UHARDDOOM_BLOCK_MASK;
 	uint32_t active = 0;
 	uint32_t ylast = 0;
@@ -618,6 +635,7 @@ static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a
 			colcmd_draw(num, cmap_a_en);
 			swrcmd_dst_ptr(dst_ptr + ylast * dst_pitch);
 			swrcmd_draw_col(num, trans_en);
+			STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_COLUMNS_SEG] = 1;
 		}
 		ylast = opy;
 		uint32_t x = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(dc_mem_wr0[opi]) & UHARDDOOM_BLOCK_MASK;
@@ -640,6 +658,7 @@ static void draw_columns_flush(uint32_t dst_ptr, uint32_t dst_pitch, bool cmap_a
 }
 
 static void cmd_draw_columns(uint32_t cmd_header) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_COLUMNS] = 1;
 	bool cmap_a_en = UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_CMAP_A_EN(cmd_header);
 	bool cmap_b_en = UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_CMAP_B_EN(cmd_header);
 	bool trans_en = UHARDDOOM_USER_DRAW_COLUMNS_HEADER_EXTR_TRANS_EN(cmd_header);
@@ -663,6 +682,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 	uint32_t xl = 0, yl = 0;
 	colcmd_col_src_pitch(1);
 	while (num--) {
+		STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_COLUMNS_COL] = 1;
 		uint32_t wr0 = *CMD_FETCH;
 		uint32_t x = UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(wr0);
 		if ((x & ~UHARDDOOM_BLOCK_MASK) != xlast) {
@@ -701,6 +721,7 @@ static void cmd_draw_columns(uint32_t cmd_header) {
 static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzstart, uint32_t fuzzend) {
 	if (heap_empty())
 		return;
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_FUZZ_BATCH] = 1;
 	dst_ptr += UHARDDOOM_USER_DRAW_COLUMNS_WR0_EXTR_X(dc_mem_wr0[0]) & ~UHARDDOOM_BLOCK_MASK;
 	uint32_t active = 0;
 	uint32_t ylast = 0;
@@ -715,6 +736,7 @@ static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzs
 			srdcmd_read_fx(num);
 			fxcmd_draw_fuzz(num);
 			swrcmd_draw_fx(num, false);
+			STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_FUZZ_SEG] = 1;
 		}
 		ylast = opy;
 		uint32_t x = UHARDDOOM_USER_DRAW_FUZZ_WR0_EXTR_X(dc_mem_wr0[opi]) & UHARDDOOM_BLOCK_MASK;
@@ -750,6 +772,7 @@ static void draw_fuzz_flush(uint32_t dst_ptr, uint32_t dst_pitch, uint32_t fuzzs
 }
 
 static void cmd_draw_fuzz(uint32_t cmd_header) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_FUZZ] = 1;
 	uint32_t num = UHARDDOOM_USER_DRAW_FUZZ_HEADER_EXTR_NUM_COLS(cmd_header);
 	uint32_t dst_ptr = *CMD_FETCH;
 	uint32_t dst_pitch = *CMD_FETCH;
@@ -770,6 +793,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 	uint32_t xlast = 0;
 	uint32_t xl = 0, yl = 0;
 	while (num--) {
+		STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_FUZZ_COL] = 1;
 		uint32_t wr0 = *CMD_FETCH;
 		uint32_t x = UHARDDOOM_USER_DRAW_FUZZ_WR0_EXTR_X(wr0);
 		if ((x & ~UHARDDOOM_BLOCK_MASK) != xlast) {
@@ -801,6 +825,7 @@ static void cmd_draw_fuzz(uint32_t cmd_header) {
 }
 
 static void cmd_draw_spans(uint32_t cmd_header) {
+	STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_SPANS] = 1;
 	bool cmap_en = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_CMAP_EN(cmd_header);
 	bool trans_en = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_TRANS_EN(cmd_header);
 	uint32_t ulog = UHARDDOOM_USER_DRAW_SPANS_HEADER_EXTR_ULOG(cmd_header);
@@ -829,6 +854,7 @@ static void cmd_draw_spans(uint32_t cmd_header) {
 	/* 1 is unaligned and thus invalid.  */
 	uint32_t last_cmap_ptr = 1;
 	while (num--) {
+		STAT_BUMP[UHARDDOOM_STAT_FW_DRAW_SPANS_SPAN] = 1;
 		uint32_t wr0 = *CMD_FETCH;
 		uint32_t x0 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X0(wr0);
 		uint32_t x1 = UHARDDOOM_USER_DRAW_SPANS_WR0_EXTR_X1(wr0);
@@ -866,9 +892,11 @@ static void cmd_draw_spans(uint32_t cmd_header) {
 noreturn void main() {
 	while (1) {
 		*JOB_WAIT;
+		STAT_BUMP[UHARDDOOM_STAT_FW_JOB] = 1;
 		while (!*CMD_END) {
 			cmd_ptr = *CMD_PTR;
 			uint32_t cmd_header = *CMD_FETCH;
+			STAT_BUMP[UHARDDOOM_STAT_FW_CMD] = 1;
 			switch (UHARDDOOM_USER_CMD_HEADER_EXTR_TYPE(cmd_header)) {
 				case UHARDDOOM_USER_CMD_TYPE_FILL_RECT:
 					cmd_fill_rect(cmd_header);

@@ -407,6 +407,32 @@ static void cmd_blit(uint32_t cmd_header) {
 			src_ptr += src_pitch;
 			dst_ptr += dst_pitch;
 		}
+	} else if (src_w == dst_w && src_h == dst_h && (src_x & UHARDDOOM_BLOCK_MASK) == dst_x && ulog == 6 && !(src_ptr & UHARDDOOM_BLOCK_MASK) && !(src_pitch & UHARDDOOM_BLOCK_MASK)) {
+		/* Background case, no scaling, no intra-block shift, and source is 64×64 repeating — use SRD.  */
+		STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_BG] = 1;
+		src_y &= (1 << vlog) - 1;
+		/* Finish SWR work.  */
+		srdsem();
+		/* Prepare the skip.  */
+		uint32_t skip_end = -(dst_w + dst_x) & UHARDDOOM_BLOCK_MASK;
+		uint32_t blocks = (dst_w + dst_x + skip_end) >> UHARDDOOM_BLOCK_SHIFT;
+		fxcmd_skip(dst_x, skip_end, false);
+		srdcmd_src_ptr(src_ptr + src_y * src_pitch);
+		srdcmd_src_pitch(src_pitch);
+		while (dst_h--) {
+			STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_BG_SPAN] = 1;
+			srdcmd_read_fx(1);
+			fxcmd_load_block();
+			fxcmd_draw_buf(blocks);
+			swrcmd_dst_ptr(dst_ptr);
+			swrcmd_draw_fx(blocks, false);
+			dst_ptr += dst_pitch;
+			src_y++;
+			if (src_y == (1 << vlog)) {
+				srdcmd_src_ptr(src_ptr);
+				src_y = 0;
+			}
+		}
 	} else {
 		/* Complex case, use SPAN.  */
 		STAT_BUMP[UHARDDOOM_STAT_FW_BLIT_COMPLEX] = 1;
